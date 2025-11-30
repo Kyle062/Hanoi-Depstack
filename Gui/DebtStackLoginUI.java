@@ -52,7 +52,6 @@ public class DebtStackLoginUI extends JFrame {
             JLabel backgroundLabel = new JLabel(new ImageIcon(backgroundImage));
             backgroundLabel.setBounds(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
             backgroundPanel.add(backgroundLabel);
-            
 
         } catch (Exception e) {
             backgroundPanel.setBackground(new Color(210, 80, 0));
@@ -62,52 +61,52 @@ public class DebtStackLoginUI extends JFrame {
             placeholder.setFont(new Font("Arial", Font.BOLD, 18));
             backgroundPanel.add(placeholder);
         }
- JLabel LogInLabel = new JLabel("LogIn");
-        LogInLabel.setBounds(FRAME_WIDTH/2 + 440, 23, 190, 20);
+        JLabel LogInLabel = new JLabel("LogIn");
+        LogInLabel.setBounds(FRAME_WIDTH / 2 + 440, 23, 190, 20);
         LogInLabel.setFont(new Font("Arial", Font.BOLD, 17));
         LogInLabel.setForeground(Color.BLACK);
         backgroundPanel.add(LogInLabel, 0);
 
         JLabel SignupLabel = new JLabel("SignUp");
-        SignupLabel.setBounds(FRAME_WIDTH/2 + 513, 23, 190, 20);
+        SignupLabel.setBounds(FRAME_WIDTH / 2 + 513, 23, 190, 20);
         SignupLabel.setFont(new Font("Arial", Font.BOLD, 17));
         SignupLabel.setForeground(Color.WHITE);
         backgroundPanel.add(SignupLabel, 0);
 
         // UserID Field on right side
         JLabel userLabel = new JLabel("UserID/ UserName:");
-        userLabel.setBounds(FRAME_WIDTH/2 + -339, 320, 190, 20);
+        userLabel.setBounds(FRAME_WIDTH / 2 + -339, 320, 190, 20);
         userLabel.setFont(new Font("Arial", Font.BOLD, 15));
         userLabel.setForeground(Color.BLACK);
         backgroundPanel.add(userLabel, 0);
 
         userIdField = new JTextField();
-        userIdField.setBounds(FRAME_WIDTH/2 + -339, 350, 320, 37);
+        userIdField.setBounds(FRAME_WIDTH / 2 + -339, 350, 320, 37);
         userIdField.setFont(new Font("Arial", Font.BOLD, 15));
         backgroundPanel.add(userIdField, 0);
 
         // Password Field on right side
         JLabel passLabel = new JLabel("Password:");
-        passLabel.setBounds(FRAME_WIDTH/2 + -339, 407, 190, 20);
+        passLabel.setBounds(FRAME_WIDTH / 2 + -339, 407, 190, 20);
         passLabel.setFont(new Font("Arial", Font.BOLD, 15));
         passLabel.setForeground(Color.BLACK);
         backgroundPanel.add(passLabel, 0);
-        
+
         passwordField = new JPasswordField();
-        passwordField.setBounds(FRAME_WIDTH/2 + -339, 437, 320, 37);
+        passwordField.setBounds(FRAME_WIDTH / 2 + -339, 437, 320, 37);
         backgroundPanel.add(passwordField, 0);
 
         // Forgot Password Link on right side
         JLabel forgotPass = new JLabel("<html><u>Forgot Password?</u></html>", SwingConstants.RIGHT);
         forgotPass.setFont(new Font("Arial", Font.ITALIC, 10));
-        forgotPass.setBounds(FRAME_WIDTH/2 + -310, 480, 300, 15);
+        forgotPass.setBounds(FRAME_WIDTH / 2 + -310, 480, 300, 15);
         forgotPass.setForeground(new Color(255, 120, 0));
         forgotPass.setCursor(new Cursor(Cursor.HAND_CURSOR));
         backgroundPanel.add(forgotPass, 0);
 
         // Login Button on right side
         JButton loginButton = new JButton("LOGIN");
-        loginButton.setBounds(FRAME_WIDTH/2 + -284, 545, 200, 40);
+        loginButton.setBounds(FRAME_WIDTH / 2 + -284, 545, 200, 40);
         loginButton.setBackground(new Color(255, 120, 0));
         loginButton.setForeground(Color.WHITE);
         loginButton.setFont(new Font("Arial", Font.BOLD, 16));
@@ -116,7 +115,7 @@ public class DebtStackLoginUI extends JFrame {
 
         // Don't have an account link on right side
         JLabel signUp = new JLabel("<html>Don't have account? <u>Sign Up</u></html>", SwingConstants.CENTER);
-        signUp.setBounds(FRAME_WIDTH/2 + -288, 598, 200, 15);
+        signUp.setBounds(FRAME_WIDTH / 2 + -288, 598, 200, 15);
         signUp.setFont(new Font("Arial", Font.PLAIN, 11));
         signUp.setForeground(new Color(255, 120, 0));
         signUp.setCursor(new Cursor(Cursor.HAND_CURSOR));
