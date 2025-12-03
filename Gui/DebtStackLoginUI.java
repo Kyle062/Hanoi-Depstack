@@ -1,6 +1,9 @@
 package Gui;
 
 import javax.swing.*;
+
+import Model.AppController;
+
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -11,6 +14,8 @@ import javax.imageio.ImageIO;
 
 public class DebtStackLoginUI extends JFrame {
 
+    private AppController controller;
+
     // Define fixed dimensions for the frame
     private static final int FRAME_WIDTH = 1250;
     private static final int FRAME_HEIGHT = 850;
@@ -19,7 +24,10 @@ public class DebtStackLoginUI extends JFrame {
     private JTextField userIdField;
     private JPasswordField passwordField;
 
-    public DebtStackLoginUI() {
+    public DebtStackLoginUI(AppController controller) {
+
+        this.controller = controller;
+
         setTitle("HANOI DEBTSTACK Login");
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -121,18 +129,15 @@ public class DebtStackLoginUI extends JFrame {
         signUp.setCursor(new Cursor(Cursor.HAND_CURSOR));
         backgroundPanel.add(signUp, 0);
 
-        // Example Action Listener for the login button
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Dummy login logic
-                String user = userIdField.getText();
-                char[] pass = passwordField.getPassword();
-                String message = "Attempting to log in with UserID: " + user;
-                JOptionPane.showMessageDialog(DebtStackLoginUI.this, message, "Login Info",
-                        JOptionPane.INFORMATION_MESSAGE);
-                // Clear password field for security
-                passwordField.setText("");
+        // Actions
+        loginButton.addActionListener(e -> {
+            String u = userIdField.getText();
+            String p = new String(passwordField.getPassword());
+            if (controller.login(u, p)) {
+                dispose(); // Close login
+                new DebtStackMainFrame(controller).setVisible(true); // Open Dashboard
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid Login");
             }
         });
     }
@@ -176,12 +181,4 @@ public class DebtStackLoginUI extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        // Run the Swing application on the Event Dispatch Thread
-        SwingUtilities.invokeLater(() -> {
-            DebtStackLoginUI ui = new DebtStackLoginUI();
-            // Example of calling the export method
-            // ui.exportPhoto("LoginScreenshot");
-        });
-    }
 }
