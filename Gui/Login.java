@@ -1,18 +1,14 @@
 package Gui;
 
 import javax.swing.*;
-
 import Model.AppController;
-
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-public class DebtStackLoginUI extends JFrame {
+public class Login extends JFrame {
 
     private AppController controller;
 
@@ -24,10 +20,8 @@ public class DebtStackLoginUI extends JFrame {
     private JTextField userIdField;
     private JPasswordField passwordField;
 
-    public DebtStackLoginUI(AppController controller) {
-
+    public Login(AppController controller) {
         this.controller = controller;
-
         setTitle("HANOI DEBTSTACK Login");
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -44,7 +38,7 @@ public class DebtStackLoginUI extends JFrame {
         setVisible(true);
     }
 
-    private void setupComplexUI() {
+    public void setupComplexUI() {
         // --- SINGLE BACKGROUND PANEL ---
         JPanel backgroundPanel = new JPanel();
         backgroundPanel.setBounds(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
@@ -80,6 +74,14 @@ public class DebtStackLoginUI extends JFrame {
         SignupLabel.setFont(new Font("Arial", Font.BOLD, 17));
         SignupLabel.setForeground(Color.WHITE);
         backgroundPanel.add(SignupLabel, 0);
+        // Add a MouseListener to handle the click event
+        SignupLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                new UserRegister().setVisible(true);
+                dispose();
+            }
+        });
 
         // UserID Field on right side
         JLabel userLabel = new JLabel("UserID/ UserName:");
@@ -129,31 +131,59 @@ public class DebtStackLoginUI extends JFrame {
         signUp.setCursor(new Cursor(Cursor.HAND_CURSOR));
         backgroundPanel.add(signUp, 0);
 
-        // Actions
-        loginButton.addActionListener(e -> {
-            String u = userIdField.getText();
-            String p = new String(passwordField.getPassword());
-            if (controller.login(u, p)) {
-                dispose(); // Close login
-                new DebtStackMainFrame(controller).setVisible(true); // Open Dashboard
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid Login");
+        // Add a MouseListener to handle the click event
+        signUp.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                new UserRegister().setVisible(true);
+                dispose();
             }
         });
-    }
 
-    private void addBulletPoint(JPanel panel, String text, int yPos) {
-        JLabel bullet = new JLabel("<html>&bull;</html>");
-        bullet.setBounds(100, yPos, 20, 20);
-        bullet.setForeground(Color.WHITE);
-        bullet.setFont(new Font("Arial", Font.PLAIN, 40));
-        panel.add(bullet, 0);
-
-        JLabel label = new JLabel(text);
-        label.setBounds(130, yPos, 400, 20);
-        label.setForeground(Color.WHITE);
-        label.setFont(new Font("Arial", Font.PLAIN, 16));
-        panel.add(label, 0);
+        // SIMPLIFIED ACTION - DIRECTLY OPENS MAIN DASHBOARD
+        loginButton.addActionListener(e -> {
+            String u = userIdField.getText().trim();
+            String p = new String(passwordField.getPassword()).trim();
+            
+            // Check if fields are empty
+            if (u.isEmpty() || p.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Please enter both username and password.", 
+                    "Login Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // Attempt login
+            if (controller.login(u, p)) {
+                // SUCCESSFUL LOGIN - DIRECTLY OPEN MAIN DASHBOARD
+                dispose(); // Close login window
+                
+                // Open main dashboard - assuming you have DebtStackUserDashboard
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        // Create and show the main dashboard
+                        UserDashboard mainDashboard = new UserDashboard(controller);
+                        mainDashboard.setVisible(true);
+                    } catch (Exception ex) {
+                        // If error occurs, show message and reopen login
+                        JOptionPane.showMessageDialog(null, 
+                            "Error opening dashboard: " + ex.getMessage() + 
+                            "\nPlease try logging in again.", 
+                            "Dashboard Error", JOptionPane.ERROR_MESSAGE);
+                        new Login(controller).setVisible(true);
+                    }
+                });
+            } else {
+                // FAILED LOGIN
+                JOptionPane.showMessageDialog(this, 
+                    "Invalid username or password. Please try again.", 
+                    "Login Failed", JOptionPane.ERROR_MESSAGE);
+                passwordField.setText(""); // Clear password field
+            }
+        });
+        
+        // Add Enter key support for password field
+        passwordField.addActionListener(e -> loginButton.doClick());
     }
 
     public void exportPhoto(String filename) {
@@ -181,4 +211,18 @@ public class DebtStackLoginUI extends JFrame {
         }
     }
 
+    public static void main(String[] args) {
+        // Set look and feel
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        // Start the application
+        SwingUtilities.invokeLater(() -> {
+            AppController controller = new AppController();
+            new Login(controller).setVisible(true);
+        });
+    }
 }

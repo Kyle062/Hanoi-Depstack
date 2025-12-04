@@ -1,7 +1,9 @@
 package Model;
-import java.awt.Color;
 
-public class Debt {
+import java.io.Serializable;
+
+public class Debt implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String name;
     private double currentBalance;
     private double interestRate;
@@ -18,11 +20,38 @@ public class Debt {
         this.currentBalance = Math.max(0, this.currentBalance - amount);
     }
 
-    public boolean isPaidOff() { return this.currentBalance <= 0.01; }
-    public String getName() { return name; }
-    public double getCurrentBalance() { return currentBalance; }
-    public double getInterestRate() { return interestRate; }
+    public boolean isPaidOff() {
+        return this.currentBalance <= 0.01;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getCurrentBalance() {
+        return currentBalance;
+    }
+
+    public double getInterestRate() {
+        return interestRate;
+    }
+
+    public double getMinimumPayment() {
+        return minimumPayment;
+    }
 
     @Override
-    public String toString() { return String.format("%s: $%.2f", name, currentBalance); }
+    public String toString() {
+        return String.format("%s: $%.2f", name, currentBalance);
+    }
+
+    public double getOriginalBalance() {
+        // TODO: You need to store the original balance separately
+        return currentBalance; // Temporary - you should add a field for originalBalance
+    }
+
+    public int getOriginalAmount() {
+        // TODO: This method name seems wrong - should it return double?
+        return (int) currentBalance; // Temporary fix
+    }
 }
