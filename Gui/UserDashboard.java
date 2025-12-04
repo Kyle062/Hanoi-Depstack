@@ -9,7 +9,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -171,12 +170,12 @@ public class UserDashboard extends JFrame {
 
         // Add New Debt Section
         JPanel addDebtPanel = createAddDebtPanel();
-        addDebtPanel.setBounds(0, 35, panelWidth, 470);
+        addDebtPanel.setBounds(0, 35, panelWidth, 550);
         rightPanel.add(addDebtPanel);
 
         // Make Payment Section
         JPanel paymentPanel = createPaymentPanel();
-        paymentPanel.setBounds(0, 560, panelWidth, 300);
+        paymentPanel.setBounds(0, 620, panelWidth, 300);
         rightPanel.add(paymentPanel);
 
         mainLayer.add(rightPanel);
@@ -231,7 +230,6 @@ public class UserDashboard extends JFrame {
         amountField = new JTextField("5000.00");
         amountField.setBounds(xField, yLabel + 15, fieldWidth, fieldHeight); // ADJUST: Consistent field position
         amountField.setFont(new Font("Arial", Font.BOLD, 14));
-
         panel.add(amountField);
 
         // Interest Rate - Label
@@ -260,8 +258,37 @@ public class UserDashboard extends JFrame {
         minField.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(minField);
 
-        // Push Button - Position below last field
-        int buttonY = yLabel + fieldHeight + 30; // Below last field with some spacing
+        // Strategy Label - Same Y position as minField label
+        yLabel += verticalSpacing; // Move down for strategy section
+        JLabel strategyLabel = new JLabel("Strategy");
+        strategyLabel.setBounds(xLabel, yLabel - 20, labelWidth, labelHeight); // ADJUST: Same position as other labels
+        strategyLabel.setFont(new Font("Arial", Font.BOLD, labelFontSize)); // ADJUST: Same font as other labels
+        panel.add(strategyLabel);
+
+        // Strategy Radio Buttons - Same Y position as minField
+        int radioY = yLabel + 15; // Same calculation as field positions
+
+        // Create button group for radio buttons
+        ButtonGroup strategyGroup = new ButtonGroup();
+
+        // Avalanche Radio Button
+        JRadioButton avalancheRadio = new JRadioButton("Avalanche", true); // Default selected
+        avalancheRadio.setBounds(xField, radioY, 120, 25); // ADJUST: Radio button position and size
+        avalancheRadio.setFont(new Font("Arial", Font.PLAIN, 14)); // ADJUST: Radio button font size
+        avalancheRadio.setOpaque(false);
+        strategyGroup.add(avalancheRadio);
+        panel.add(avalancheRadio);
+
+        // Snowball Radio Button
+        JRadioButton snowballRadio = new JRadioButton("Snowball");
+        snowballRadio.setBounds(xField + 130, radioY, 120, 25); // ADJUST: Position next to avalanche
+        snowballRadio.setFont(new Font("Arial", Font.PLAIN, 14)); // ADJUST: Same font size
+        snowballRadio.setOpaque(false);
+        strategyGroup.add(snowballRadio);
+        panel.add(snowballRadio);
+
+        // Push Button - Position below strategy radio buttons
+        int buttonY = radioY + 40; // Below radio buttons with some spacing
         JButton pushButton = new JButton("PUSH TO STACK");
         pushButton.setBounds(xField, buttonY, fieldWidth, 45); // ADJUST: Button uses same width as fields
         pushButton.setFont(new Font("Arial", Font.BOLD, 16)); // ADJUST: Button font size
@@ -339,21 +366,30 @@ public class UserDashboard extends JFrame {
     }
 
     private void createCenterArea() {
+        // Declare centerWidth first
+        int centerWidth = getWidth() - 540;
+
         JPanel centerPanel = new JPanel(null);
         centerPanel.setOpaque(false);
-        int centerWidth = getWidth() - 540; // Account for sidebar and right panel
-        centerPanel.setBounds(120, 100, centerWidth, 2000);
 
         // Tower Panel
         towerPanel = new TowerVisualizationPanel();
-        towerPanel.setBounds(0, 0, centerWidth, 400);
+        int towerHeight = 450; // Tower height
+        towerPanel.setBounds(0, 0, centerWidth, towerHeight);
         centerPanel.add(towerPanel);
 
         // Card Panel
         cardPanel = createCardPanel();
-
-        cardPanel.setBounds((centerWidth - 600) / 2, 420, 1000, 1000);
+        int cardHeight = 200; // Card height
+        int cardY = towerHeight + 20; // 20px spacing between tower and card
+        cardPanel.setBounds(10, cardY, 6000, cardHeight);
         centerPanel.add(cardPanel);
+
+        // Calculate total height needed
+        int totalHeight = cardY + cardHeight + 1000; // Add 20px bottom padding
+
+        // Set centerPanel bounds with calculated height
+        centerPanel.setBounds(120, 100, centerWidth + 3000, totalHeight);
 
         mainLayer.add(centerPanel);
     }
@@ -496,7 +532,7 @@ public class UserDashboard extends JFrame {
 
     private JPanel createCardPanel() {
         JPanel panel = new JPanel(null);
-        panel.setPreferredSize(new Dimension(1000, 1000));
+        panel.setPreferredSize(new Dimension(3000, 3000));
         panel.setOpaque(false);
 
         JPanel card = new JPanel(null);
@@ -504,7 +540,7 @@ public class UserDashboard extends JFrame {
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 220), 2),
                 new EmptyBorder(20, 20, 20, 20)));
-        card.setBounds(0, 0, 600, 200);
+        card.setBounds(0, 0, 1300, 300);
 
         // Title with close button
         JLabel title = new JLabel("Credit Card Details");
@@ -584,8 +620,8 @@ public class UserDashboard extends JFrame {
 
         logsScrollPane = new JScrollPane(logsArea);
         logsScrollPane.setBorder(BorderFactory.createLineBorder(new Color(80, 80, 100)));
-        logsScrollPane.setBounds(120, 770, getWidth() - 450, 150);
-        logsScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        logsScrollPane.setBounds(130, 800, getWidth() - 620, 200);
+        logsScrollPane.getVerticalScrollBar().setUnitIncrement(18);
 
         mainLayer.add(logsScrollPane);
     }
