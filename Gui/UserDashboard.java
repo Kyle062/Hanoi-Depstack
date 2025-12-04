@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class UserDashboard extends JFrame {
 
-    private final AppController controller = new AppController();
+    private final static AppController controller = new AppController();
     private DebtManager manager;
 
     // UI components
@@ -38,8 +38,7 @@ public class UserDashboard extends JFrame {
     // Right panel components
     private JTextField nameField, amountField, intField, minField, payField;
 
-    public UserDashboard() {
-        super("HANOI DEBTSTACK Dashboard");
+    public UserDashboard(AppController controller2) {
         manager = controller.getManager();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -54,17 +53,10 @@ public class UserDashboard extends JFrame {
         setVisible(true);
     }
 
-    public UserDashboard(AppController controller2) {
-        // TODO Auto-generated constructor stub
-    }
-
     private void initUI() {
-        // Create layered pane for background and components
         layeredPane = new JLayeredPane();
         layeredPane.setPreferredSize(getSize());
         add(layeredPane, BorderLayout.CENTER);
-
-        // Set up background
         setupBackground();
 
         // Create main layer for all UI components
@@ -73,10 +65,8 @@ public class UserDashboard extends JFrame {
         mainLayer.setBounds(0, 0, getWidth(), getHeight());
         layeredPane.add(mainLayer, JLayeredPane.PALETTE_LAYER);
 
-        // Create sidebar
         createSidebar();
 
-        // Create top bar with search
         createTopBar();
 
         // Create right control panel
@@ -161,22 +151,14 @@ public class UserDashboard extends JFrame {
     private void createTopBar() {
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setOpaque(false);
-        topBar.setBounds(120, 30, getWidth() - 240, 50);
-
-        // Title
-        JLabel titleLabel = new JLabel("HANOI DEBTSTACK DASHBOARD");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(50, 50, 80));
-        topBar.add(titleLabel, BorderLayout.WEST);
-
-        // Search field
+        topBar.setBounds(125, 30, 1300, 50);
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         searchPanel.setOpaque(false);
-        JTextField searchField = new JTextField("Search here...", 20);
-        searchField.setPreferredSize(new Dimension(250, 35));
+        JTextField searchField = new JTextField("Search here...", 1300);
+        searchField.setPreferredSize(new Dimension(1300, 50));
         searchField.setFont(new Font("Arial", Font.PLAIN, 14));
         searchPanel.add(searchField);
-        topBar.add(searchPanel, BorderLayout.EAST);
+        topBar.add(searchPanel, BorderLayout.WEST);
 
         mainLayer.add(topBar);
     }
@@ -184,17 +166,17 @@ public class UserDashboard extends JFrame {
     private void createRightControlPanel() {
         JPanel rightPanel = new JPanel(null);
         rightPanel.setOpaque(false);
-        int panelWidth = 350;
-        rightPanel.setBounds(getWidth() - panelWidth - 30, 100, panelWidth, 700);
+        int panelWidth = 450;
+        rightPanel.setBounds(getWidth() - panelWidth - 30, 0, panelWidth, 2000);
 
         // Add New Debt Section
         JPanel addDebtPanel = createAddDebtPanel();
-        addDebtPanel.setBounds(0, 0, panelWidth, 240);
+        addDebtPanel.setBounds(0, 35, panelWidth, 470);
         rightPanel.add(addDebtPanel);
 
         // Make Payment Section
         JPanel paymentPanel = createPaymentPanel();
-        paymentPanel.setBounds(0, 260, panelWidth, 200);
+        paymentPanel.setBounds(0, 560, panelWidth, 300);
         rightPanel.add(paymentPanel);
 
         mainLayer.add(rightPanel);
@@ -209,60 +191,90 @@ public class UserDashboard extends JFrame {
 
         // Title
         JLabel title = new JLabel("Add New Debt");
-        title.setFont(new Font("Arial", Font.BOLD, 18));
-        title.setBounds(10, 10, 200, 25);
+        title.setFont(new Font("Sans", Font.BOLD, 25));
+        title.setBounds(20, 40, 200, 25); // ADJUST: Title position and size
         panel.add(title);
 
-        int yPos = 45;
-        int labelWidth = 120;
-        int fieldWidth = 180;
-        int fieldHeight = 28;
+        // Starting position for first label
+        int yLabel = 100; // Y position for first label
+        int xLabel = 20; // X position for all labels
+        int labelWidth = 300; // Width for all labels
+        int labelHeight = 28; // Height for all labels
+        int labelFontSize = 16; // Font size for all labels
 
-        // Debt Name
-        JLabel nameLabel = new JLabel("Debt Name:");
-        nameLabel.setBounds(10, yPos, labelWidth, 25);
+        // Field positions (below labels)
+        int xField = 20; // X position for all fields (same as labels)
+        int fieldWidth = 400; // Width for all fields
+        int fieldHeight = 35; // Height for all fields
+        int verticalSpacing = 80; // Vertical spacing between each label+field pair
+
+        // Debt Name - Label
+        JLabel nameLabel = new JLabel("Debt Name");
+        nameLabel.setBounds(xLabel, yLabel - 20, labelWidth, labelHeight); // ADJUST: Label position
+        nameLabel.setFont(new Font("Arial", Font.BOLD, labelFontSize)); // ADJUST: Label font
         panel.add(nameLabel);
+
+        // Debt Name - Field
         nameField = new JTextField("Credit Card, Loan, etc.");
-        nameField.setBounds(130, yPos, fieldWidth, fieldHeight);
+        nameField.setBounds(xField, yLabel + 15, fieldWidth, fieldHeight); // ADJUST: Field position (below label)
+        nameField.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(nameField);
 
-        // Total Amount
-        yPos += 40;
-        JLabel amountLabel = new JLabel("Total Amount ($):");
-        amountLabel.setBounds(10, yPos, labelWidth, 25);
+        // Total Amount - Label
+        yLabel += verticalSpacing; // Move down for next label
+        JLabel amountLabel = new JLabel("Total Amount ($)");
+        amountLabel.setBounds(xLabel, yLabel - 20, labelWidth, labelHeight); // ADJUST: Consistent label position
+        amountLabel.setFont(new Font("Arial", Font.BOLD, labelFontSize)); // ADJUST: Consistent label font
         panel.add(amountLabel);
+
+        // Total Amount - Field
         amountField = new JTextField("5000.00");
-        amountField.setBounds(130, yPos, fieldWidth, fieldHeight);
+        amountField.setBounds(xField, yLabel + 15, fieldWidth, fieldHeight); // ADJUST: Consistent field position
+        amountField.setFont(new Font("Arial", Font.BOLD, 14));
+
         panel.add(amountField);
 
-        // Interest Rate
-        yPos += 40;
-        JLabel intLabel = new JLabel("Interest Rate (%):");
-        intLabel.setBounds(10, yPos, labelWidth, 25);
+        // Interest Rate - Label
+        yLabel += verticalSpacing; // Move down for next label
+        JLabel intLabel = new JLabel("Interest Rate (%)");
+        intLabel.setBounds(xLabel, yLabel - 20, labelWidth, labelHeight); // ADJUST: Consistent label position
+        intLabel.setFont(new Font("Arial", Font.BOLD, labelFontSize)); // ADJUST: Consistent label font
         panel.add(intLabel);
+
+        // Interest Rate - Field
         intField = new JTextField("15.50");
-        intField.setBounds(130, yPos, fieldWidth, fieldHeight);
+        intField.setBounds(xField, yLabel + 15, fieldWidth, fieldHeight); // ADJUST: Consistent field position
+        intField.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(intField);
 
-        // Minimum Payment
-        yPos += 40;
-        JLabel minLabel = new JLabel("Min Payment ($):");
-        minLabel.setBounds(10, yPos, labelWidth, 25);
+        // Minimum Payment - Label
+        yLabel += verticalSpacing; // Move down for next label
+        JLabel minLabel = new JLabel("Min Payment ($)");
+        minLabel.setBounds(xLabel, yLabel - 20, labelWidth, labelHeight); // ADJUST: Consistent label position
+        minLabel.setFont(new Font("Arial", Font.BOLD, labelFontSize)); // ADJUST: Consistent label font
         panel.add(minLabel);
+
+        // Minimum Payment - Field
         minField = new JTextField("100.00");
-        minField.setBounds(130, yPos, fieldWidth, fieldHeight);
+        minField.setBounds(xField, yLabel + 15, fieldWidth, fieldHeight); // ADJUST: Consistent field position
+        minField.setFont(new Font("Arial", Font.BOLD, 14));
         panel.add(minField);
 
-        // Push Button
+        // Push Button - Position below last field
+        int buttonY = yLabel + fieldHeight + 30; // Below last field with some spacing
         JButton pushButton = new JButton("PUSH TO STACK");
-        pushButton.setBounds(10, yPos + 45, 300, 35);
-        pushButton.setFont(new Font("Arial", Font.BOLD, 14));
-        pushButton.setBackground(new Color(70, 130, 180));
+        pushButton.setBounds(xField, buttonY, fieldWidth, 45); // ADJUST: Button uses same width as fields
+        pushButton.setFont(new Font("Arial", Font.BOLD, 16)); // ADJUST: Button font size
+        pushButton.setBackground(new Color(234, 88, 12));
         pushButton.setForeground(Color.WHITE);
         pushButton.setFocusPainted(false);
-        pushButton.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        pushButton.setOpaque(true); // ADD THIS: Makes background fully visible
+        pushButton.setBorderPainted(false); // ADD THIS: Removes default border
         pushButton.addActionListener(e -> pushNewDebt());
         panel.add(pushButton);
+
+        // ADJUST: Set panel size to fit all components
+        panel.setPreferredSize(new Dimension(fieldWidth + 40, buttonY + 60));
 
         return panel;
     }
@@ -298,12 +310,12 @@ public class UserDashboard extends JFrame {
         minFullPanel.setOpaque(false);
         minFullPanel.setBounds(10, 125, 300, 30);
 
-        JButton minButton = new JButton("Min ($150)");
+        JButton minButton = new JButton("Min ()");
         minButton.setFont(new Font("Arial", Font.PLAIN, 12));
         minButton.setPreferredSize(new Dimension(100, 25));
         minButton.addActionListener(e -> payField.setText("150.00"));
 
-        JButton fullButton = new JButton("Full ($5000.00)");
+        JButton fullButton = new JButton("Full (.00)");
         fullButton.setFont(new Font("Arial", Font.PLAIN, 12));
         fullButton.setPreferredSize(new Dimension(120, 25));
         fullButton.addActionListener(e -> payField.setText("5000.00"));
@@ -329,8 +341,8 @@ public class UserDashboard extends JFrame {
     private void createCenterArea() {
         JPanel centerPanel = new JPanel(null);
         centerPanel.setOpaque(false);
-        int centerWidth = getWidth() - 450; // Account for sidebar and right panel
-        centerPanel.setBounds(120, 100, centerWidth, 650);
+        int centerWidth = getWidth() - 540; // Account for sidebar and right panel
+        centerPanel.setBounds(120, 100, centerWidth, 2000);
 
         // Tower Panel
         towerPanel = new TowerVisualizationPanel();
@@ -339,7 +351,8 @@ public class UserDashboard extends JFrame {
 
         // Card Panel
         cardPanel = createCardPanel();
-        cardPanel.setBounds((centerWidth - 600) / 2, 420, 600, 200);
+
+        cardPanel.setBounds((centerWidth - 600) / 2, 420, 1000, 1000);
         centerPanel.add(cardPanel);
 
         mainLayer.add(centerPanel);
@@ -483,7 +496,7 @@ public class UserDashboard extends JFrame {
 
     private JPanel createCardPanel() {
         JPanel panel = new JPanel(null);
-        panel.setPreferredSize(new Dimension(600, 200));
+        panel.setPreferredSize(new Dimension(1000, 1000));
         panel.setOpaque(false);
 
         JPanel card = new JPanel(null);
@@ -510,7 +523,7 @@ public class UserDashboard extends JFrame {
         balanceLabel.setBounds(10, 80, 120, 25);
         card.add(balanceLabel);
 
-        JLabel balanceValue = new JLabel("$5,000.00");
+        JLabel balanceValue = new JLabel(",000.00");
         balanceValue.setFont(new Font("Arial", Font.BOLD, 24));
         balanceValue.setForeground(new Color(0, 100, 200));
         balanceValue.setBounds(10, 105, 150, 30);
@@ -543,14 +556,14 @@ public class UserDashboard extends JFrame {
         card.add(progressBar);
 
         // Original amount
-        JLabel originalLabel = new JLabel("Original Amount: $5,000");
+        JLabel originalLabel = new JLabel("Original Amount: ,000");
         originalLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         originalLabel.setForeground(Color.DARK_GRAY);
         originalLabel.setBounds(300, 150, 180, 25);
         card.add(originalLabel);
 
         // Minimum payment
-        JLabel minPaymentLabel = new JLabel("Min. Payment: $150");
+        JLabel minPaymentLabel = new JLabel("Min. Payment: ");
         minPaymentLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         minPaymentLabel.setForeground(Color.DARK_GRAY);
         minPaymentLabel.setBounds(300, 175, 180, 25);
@@ -802,6 +815,6 @@ public class UserDashboard extends JFrame {
             e.printStackTrace();
         }
 
-        SwingUtilities.invokeLater(() -> new UserDashboard());
+        SwingUtilities.invokeLater(() -> new UserDashboard(controller));
     }
 }
