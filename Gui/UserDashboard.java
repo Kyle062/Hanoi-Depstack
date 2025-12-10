@@ -105,7 +105,7 @@ public class UserDashboard extends JFrame {
     private void createSidebar() {
         JPanel sidebar = new JPanel();
         // Spacing between buttons
-        sidebar.setLayout(new GridLayout(8, 1, 0, 20));
+        sidebar.setLayout(new GridLayout(8, 1, 0, 25));
         sidebar.setOpaque(false);
         // Position on the far left
         sidebar.setBounds(10, 150, 80, 600);
@@ -127,10 +127,10 @@ public class UserDashboard extends JFrame {
         towerContainer = new RoundedPanel(25, Color.WHITE);
         towerContainer.setLayout(null);
         // Position: x=110 (right of sidebar), y=30
-        towerContainer.setBounds(110, 30, 850, 420);
+        towerContainer.setBounds(150, 30, 1300, 530);
 
         TowerVisualizationPanel towerVis = new TowerVisualizationPanel();
-        towerVis.setBounds(10, 10, 830, 400);
+        towerVis.setBounds(50, 60, 1200, 400);
         towerContainer.add(towerVis);
         mainLayer.add(towerContainer);
 
@@ -490,7 +490,7 @@ public class UserDashboard extends JFrame {
                 g2.setColor(Color.BLACK);
                 g2.setFont(new Font("SansSerif", Font.BOLD, 14));
                 String lbl = labels[i];
-                g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2, baseY + 35);
+                g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2 + 30, baseY + 40);
                 g2.setColor(new Color(120, 40, 120)); // Reset for next pillar
             }
 
@@ -530,13 +530,13 @@ public class UserDashboard extends JFrame {
                     c = new Color(100, 100, 100);
 
                 g2.setColor(c);
-                int width = 120 + (i * 20); // Make them get wider as they go down (pyramid style)
+                int width = 250 + (i * 20); // Make them get wider as they go down (pyramid style)
 
                 g2.fillRoundRect(centerX - width / 2, currentY, width, brickH, 15, 15);
 
                 // Text
                 g2.setColor(Color.WHITE);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 10));
+                g2.setFont(new Font("SansSerif", Font.BOLD, 11));
                 String info = d.getName() + " $" + (int) d.getCurrentBalance();
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(info, centerX - fm.stringWidth(info) / 2, currentY + 25);
