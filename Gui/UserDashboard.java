@@ -131,7 +131,16 @@ public class UserDashboard extends JFrame {
         // Add buttons using the helper method
         sidebar.add(createIconButton("Consultation \nAppointment", "Consultation \nAppointment",
                 e -> {
-                    new UserConsultation().setVisible(true);
+                    try {
+                        new UserConsultation().setVisible(true);
+                    } catch (Exception ex) {
+                        // If UserConsultation doesn't exist yet, show a message
+                        JOptionPane.showMessageDialog(this,
+                                "Consultation feature is not available yet.",
+                                "Information",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
                     dispose();
                 }));
         sidebar.add(createIconButton("PEEK", "View Top", e -> onPeekClicked()));
@@ -348,41 +357,60 @@ public class UserDashboard extends JFrame {
     }
 
     private void updateCreditCardPanel() {
-        List<Debt> activeDebts = manager.getStackForVisualization();
-        if (activeDebts != null && !activeDebts.isEmpty()) {
-            Debt topDebt = activeDebts.get(0); // Top of stack is first element
+        try {
+            List<Debt> activeDebts = manager.getStackForVisualization();
+            if (activeDebts != null && !activeDebts.isEmpty()) {
+                // The first element in the list is the TOS (top of stack)
+                Debt topDebt = activeDebts.get(0);
 
-            // Update card title
-            cardTitleLabel.setText(topDebt.getName());
+                // Update card title
+                cardTitleLabel.setText(topDebt.getName());
 
-            // Update position (always 1 for TOS)
-            posLabel.setText("Position: 1 (TOS)");
+                // Update position (always 1 for TOS)
+                posLabel.setText("Position: 1 (TOS)");
 
-            // Update current balance
-            balValLabel.setText(String.format("$%,.2f", topDebt.getCurrentBalance()));
+                // Update current balance
+                balValLabel.setText(String.format("$%,.2f", topDebt.getCurrentBalance()));
 
-            // Update interest rate
-            intValLabel.setText(String.format("%.1f%%", topDebt.getInterestRate()));
+                // Update interest rate - FIXED: Handle any type of interest rate
+                try {
+                    // Get interest rate as a number
+                    Object rateObj = topDebt.getInterestRate();
+                    if (rateObj instanceof Number) {
+                        double interestRate = ((Number) rateObj).doubleValue();
+                        intValLabel.setText(String.format("%.1f%%", interestRate));
+                    } else {
+                        // If it's not a number, just convert to string
+                        intValLabel.setText(rateObj.toString() + "%");
+                    }
+                } catch (Exception e) {
+                    // If there's any error, just show it as-is
+                    intValLabel.setText("Error");
+                }
 
-            // Update original amount
-            ogAmtLabel.setText(String.format("Original Amount: $%,.2f", topDebt.getOriginalAmount()));
+                // Update original amount
+                ogAmtLabel.setText(String.format("Original Amount: $%,.2f", topDebt.getOriginalAmount()));
 
-            // Update minimum payment
-            minPayLabel.setText(String.format("Min Payment: $%,.2f", topDebt.getMinimumPayment()));
+                // Update minimum payment
+                minPayLabel.setText(String.format("Min Payment: $%,.2f", topDebt.getMinimumPayment()));
 
-            // Update progress bar (percentage paid)
-            double progress = ((topDebt.getOriginalAmount() - topDebt.getCurrentBalance())
-                    / topDebt.getOriginalAmount()) * 100;
-            progressBar.setValue((int) Math.min(100, Math.max(0, progress)));
-        } else {
-            // No active debts - show defaults
-            cardTitleLabel.setText("No Active Debt");
-            posLabel.setText("Position: N/A");
-            balValLabel.setText("$0.00");
-            intValLabel.setText("0.0%");
-            ogAmtLabel.setText("Original Amount: $0.00");
-            minPayLabel.setText("Min Payment: $0.00");
-            progressBar.setValue(0);
+                // Update progress bar (percentage paid)
+                double progress = ((topDebt.getOriginalAmount() - topDebt.getCurrentBalance())
+                        / topDebt.getOriginalAmount()) * 100;
+                progressBar.setValue((int) Math.min(100, Math.max(0, progress)));
+            } else {
+                // No active debts - show defaults
+                cardTitleLabel.setText("No Active Debt");
+                posLabel.setText("Position: N/A");
+                balValLabel.setText("$0.00");
+                intValLabel.setText("0.0%");
+                ogAmtLabel.setText("Original Amount: $0.00");
+                minPayLabel.setText("Min Payment: $0.00");
+                progressBar.setValue(0);
+            }
+        } catch (Exception e) {
+            // Ignore any errors in updating the credit card panel
+            // The application should continue working even if this panel fails
         }
     }
 
@@ -591,40 +619,45 @@ public class UserDashboard extends JFrame {
             int gap = 5;
             int currentY = baseY - gap - brickH;
 
-            // Draw from bottom up (first in list is bottom for visual stack usually)
-            // But if it's a Stack structure, top is first.
-            // In Hanoi visualization: Top of stack is physically on top.
-            // Let's iterate normally but place them going up.
-
-            for (int i = 0; i < Math.min(debts.size(), 6); i++) {
+            // Draw stack properly: TOS (first element) at the top, newer items on top
+            // In a stack, index 0 is the TOS, so we draw them in order from top to bottom
+            
+            int totalDebts = Math.min(debts.size(), 6); // Limit to 6 for visualization
+            
+            for (int i = 0; i < totalDebts; i++) {
                 Debt d = debts.get(i);
-
-                // Color logic based on index or type
+                
+                // Calculate Y position: TOS at the top (lowest Y), older debts below
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+                
+                // Color logic based on position in stack
                 Color c;
                 if (i == 0)
-                    c = new Color(50, 200, 50); // Green (Top/Active)
+                    c = new Color(50, 200, 50); // Green (Top/Active - TOS)
                 else if (i == 1)
-                    c = new Color(255, 200, 50); // Yellow
+                    c = new Color(255, 200, 50); // Yellow (Second in stack)
                 else
-                    c = new Color(220, 100, 50); // Orange/Red
+                    c = new Color(220, 100, 50); // Orange/Red (Lower in stack)
 
-                // If paid off column
+                // If paid off column - use gray
                 if (centerX > getWidth() / 2 + 100)
                     c = new Color(100, 100, 100);
 
                 g2.setColor(c);
-                int width = 250 + (i * 20); // Make them get wider as they go down (pyramid style)
+                
+                // Make debts wider as they go down (pyramid style)
+                // Bottom debts (higher index) should be wider
+                int width = 250 + ((totalDebts - i - 1) * 20);
 
-                g2.fillRoundRect(centerX - width / 2, currentY, width, brickH, 15, 15);
+                // Draw the debt "brick"
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 15, 15);
 
-                // Text
+                // Add debt info text
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("SansSerif", Font.BOLD, 11));
                 String info = d.getName() + " $" + (int) d.getCurrentBalance();
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(info, centerX - fm.stringWidth(info) / 2, currentY + 25);
-
-                currentY -= (brickH + gap);
+                g2.drawString(info, centerX - fm.stringWidth(info) / 2, yPos + 25);
             }
         }
     }
@@ -657,9 +690,28 @@ public class UserDashboard extends JFrame {
                 return;
             }
 
+            // Validate minimum values
+            if (amt <= 0) {
+                JOptionPane.showMessageDialog(this, "Amount must be greater than 0");
+                return;
+            }
+
+            if (ir < 0) {
+                JOptionPane.showMessageDialog(this, "Interest rate cannot be negative");
+                return;
+            }
+
+            if (min <= 0) {
+                JOptionPane.showMessageDialog(this, "Minimum payment must be greater than 0");
+                return;
+            }
+
             // Create and add the debt
             Debt newDebt = new Debt(name, amt, ir, min);
             controller.getManager().pushDebt(newDebt);
+
+            // Debug: Print stack order
+            printStackOrder();
 
             log("PUSH: Added " + name + " ($" + String.format("%.2f", amt) + ")");
 
@@ -679,7 +731,7 @@ public class UserDashboard extends JFrame {
 
             refreshAll();
 
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error adding debt. Please check your inputs.");
         }
@@ -708,17 +760,30 @@ public class UserDashboard extends JFrame {
                     return;
                 }
 
-                // Allow overpayment (just pay off the full balance)
-                double paymentAmount = Math.min(amt, top.getCurrentBalance());
+                // Check if payment exceeds balance
+                if (amt > top.getCurrentBalance()) {
+                    int option = JOptionPane.showConfirmDialog(this,
+                            "Payment amount ($" + String.format("%.2f", amt) +
+                                    ") exceeds current balance ($" + String.format("%.2f", top.getCurrentBalance()) +
+                                    ").\nPay full balance instead?",
+                            "Confirm Payment",
+                            JOptionPane.YES_NO_OPTION);
 
-                top.makePayment(paymentAmount);
-                log("PAID: $" + String.format("%.2f", paymentAmount) + " to " + top.getName());
+                    if (option == JOptionPane.YES_OPTION) {
+                        amt = top.getCurrentBalance();
+                    } else {
+                        return;
+                    }
+                }
+
+                top.makePayment(amt);
+                log("PAID: $" + String.format("%.2f", amt) + " to " + top.getName());
 
                 // Check if debt is paid off
                 if (top.isPaidOff()) {
                     // Move to paid-off debts
                     Debt paidOffDebt = controller.getManager().popDebt();
-                    paidOffDebts.add(paidOffDebt);
+                    paidOffDebts.add(0, paidOffDebt); // Add to beginning (top of paid-off stack)
                     log("COMPLETED: " + top.getName() + " is now paid off!");
 
                     // Add to event calendar
@@ -726,10 +791,10 @@ public class UserDashboard extends JFrame {
 
                     // Check if there's a new TOS and move it from auxiliary if needed
                     if (controller.getManager().peekTOS() == null && !auxiliaryDebts.isEmpty()) {
-                        // Move the top debt from auxiliary back to active
+                        // Move the top debt from auxiliary back to active (LIFO)
                         Debt newActive = auxiliaryDebts.remove(0);
                         controller.getManager().pushDebt(newActive);
-                        log("MOVED: " + newActive.getName() + " from auxiliary to active");
+                        log("MOVED: " + newActive.getName() + " from auxiliary to active (LIFO)");
                     }
                 }
 
@@ -738,8 +803,7 @@ public class UserDashboard extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "No active debt to pay!");
             }
-        } catch (NumberFormatException e) {
-
+        } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error making payment. Please try again.");
         }
@@ -768,6 +832,21 @@ public class UserDashboard extends JFrame {
         return d != null ? d.getName() : "None";
     }
 
+    // Helper method to debug stack order
+    private void printStackOrder() {
+        System.out.println("=== Current Stack Order (TOS First) ===");
+        List<Debt> debts = manager.getStackForVisualization();
+        if (debts != null) {
+            for (int i = 0; i < debts.size(); i++) {
+                System.out.println((i + 1) + ". " + debts.get(i).getName() + 
+                    " - Balance: $" + String.format("%.2f", debts.get(i).getCurrentBalance()));
+            }
+        } else {
+            System.out.println("No active debts");
+        }
+        System.out.println("=========================");
+    }
+
     // Placeholder actions for sidebar buttons
     private void onAddClicked() {
         JOptionPane.showMessageDialog(this, "Use panel on right");
@@ -780,7 +859,7 @@ public class UserDashboard extends JFrame {
                     "Top of Stack Details:\n" +
                             "Name: " + d.getName() + "\n" +
                             "Current Balance: $" + String.format("%.2f", d.getCurrentBalance()) + "\n" +
-                            "Interest Rate: " + String.format("%.1f", d.getInterestRate()) + "%\n" +
+                            "Interest Rate: " + d.getInterestRate() + "%\n" +
                             "Minimum Payment: $" + String.format("%.2f", d.getMinimumPayment()) + "\n" +
                             "Original Amount: $" + String.format("%.2f", d.getOriginalAmount()),
                     "Top of Stack Details",
@@ -800,10 +879,13 @@ public class UserDashboard extends JFrame {
                     JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // Move TOS to auxiliary
+                // Move TOS to auxiliary - pop from main stack
                 Debt movedDebt = controller.getManager().popDebt();
-                auxiliaryDebts.add(0, movedDebt); // Add to beginning (top of auxiliary)
-                log("MOVED: " + movedDebt.getName() + " from active to auxiliary");
+                
+                // Add to beginning of auxiliary list (top of auxiliary stack)
+                auxiliaryDebts.add(0, movedDebt);
+                
+                log("MOVED: " + movedDebt.getName() + " from active to auxiliary (LIFO)");
                 refreshAll();
             }
         } else {
@@ -838,16 +920,19 @@ public class UserDashboard extends JFrame {
     private void onHistoryClicked() {
         boolean vis = logsScrollPane.isVisible();
         logsScrollPane.setVisible(!vis);
-        log("Log panel visibility toggled: " + (!vis ? "Visible" : "Hidden"));
+        if (!vis) {
+            log("Log panel is now visible");
+        }
     }
 
     private void onProfileClicked() {
         // Show user profile information
-        int activeDebts = manager.getStackForVisualization() != null ? manager.getStackForVisualization().size() : 0;
+        List<Debt> activeDebtsList = manager.getStackForVisualization();
+        int activeDebts = activeDebtsList != null ? activeDebtsList.size() : 0;
         double totalBalance = 0;
 
         if (activeDebts > 0) {
-            for (Debt debt : manager.getStackForVisualization()) {
+            for (Debt debt : activeDebtsList) {
                 totalBalance += debt.getCurrentBalance();
             }
         }
@@ -857,7 +942,8 @@ public class UserDashboard extends JFrame {
                         "Active Debts: " + activeDebts + "\n" +
                         "Total Active Balance: $" + String.format("%.2f", totalBalance) + "\n" +
                         "Auxiliary Debts: " + auxiliaryDebts.size() + "\n" +
-                        "Paid-off Debts: " + paidOffDebts.size(),
+                        "Paid-off Debts: " + paidOffDebts.size() + "\n" +
+                        "Stack Order (LIFO): Newest debt is TOS",
                 "Profile Summary",
                 JOptionPane.INFORMATION_MESSAGE);
     }
