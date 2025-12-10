@@ -131,17 +131,7 @@ public class UserDashboard extends JFrame {
         // Add buttons using the helper method
         sidebar.add(createIconButton("Consultation \nAppointment", "Consultation \nAppointment",
                 e -> {
-                    try {
-                        new UserConsultation().setVisible(true);
-                    } catch (Exception ex) {
-                        // If UserConsultation doesn't exist yet, show a message
-                        JOptionPane.showMessageDialog(this,
-                                "Consultation feature is not available yet.",
-                                "Information",
-                                JOptionPane.INFORMATION_MESSAGE);
-                        return;
-                    }
-                    dispose();
+                    showConsultationDialog(mainLayer);
                 }));
         sidebar.add(createIconButton("PEEK", "View Top", e -> onPeekClicked()));
         sidebar.add(createIconButton("PAY", "Settle", e -> onSettleClicked()));
@@ -621,15 +611,15 @@ public class UserDashboard extends JFrame {
 
             // Draw stack properly: TOS (first element) at the top, newer items on top
             // In a stack, index 0 is the TOS, so we draw them in order from top to bottom
-            
+
             int totalDebts = Math.min(debts.size(), 6); // Limit to 6 for visualization
-            
+
             for (int i = 0; i < totalDebts; i++) {
                 Debt d = debts.get(i);
-                
+
                 // Calculate Y position: TOS at the top (lowest Y), older debts below
                 int yPos = baseY - gap - brickH - (i * (brickH + gap));
-                
+
                 // Color logic based on position in stack
                 Color c;
                 if (i == 0)
@@ -644,7 +634,7 @@ public class UserDashboard extends JFrame {
                     c = new Color(100, 100, 100);
 
                 g2.setColor(c);
-                
+
                 // Make debts wider as they go down (pyramid style)
                 // Bottom debts (higher index) should be wider
                 int width = 250 + ((totalDebts - i - 1) * 20);
@@ -838,8 +828,8 @@ public class UserDashboard extends JFrame {
         List<Debt> debts = manager.getStackForVisualization();
         if (debts != null) {
             for (int i = 0; i < debts.size(); i++) {
-                System.out.println((i + 1) + ". " + debts.get(i).getName() + 
-                    " - Balance: $" + String.format("%.2f", debts.get(i).getCurrentBalance()));
+                System.out.println((i + 1) + ". " + debts.get(i).getName() +
+                        " - Balance: $" + String.format("%.2f", debts.get(i).getCurrentBalance()));
             }
         } else {
             System.out.println("No active debts");
@@ -881,10 +871,10 @@ public class UserDashboard extends JFrame {
             if (confirm == JOptionPane.YES_OPTION) {
                 // Move TOS to auxiliary - pop from main stack
                 Debt movedDebt = controller.getManager().popDebt();
-                
+
                 // Add to beginning of auxiliary list (top of auxiliary stack)
                 auxiliaryDebts.add(0, movedDebt);
-                
+
                 log("MOVED: " + movedDebt.getName() + " from active to auxiliary (LIFO)");
                 refreshAll();
             }
@@ -946,6 +936,82 @@ public class UserDashboard extends JFrame {
                         "Stack Order (LIFO): Newest debt is TOS",
                 "Profile Summary",
                 JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private static void showConsultationDialog(Component parentComponent) {
+        // --- 1. Create the Panel that will hold all the form fields ---
+
+        // We use a GridLayout with 4 rows and 2 columns for a clean label/field pair
+        // layout.
+        // The numbers (5, 5) are for the vertical and horizontal space between
+        // components.
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 10));
+
+        // --- 2. Create the components for the form fields ---
+
+        // Label and field for "Reason for Consultation:"
+        JLabel reasonLabel = new JLabel("Reason for Consultation:");
+        JTextField reasonField = new JTextField(20); // 20 is the preferred width
+
+        // Label and field for "Choose available Financial Advisor:"
+        JLabel advisorLabel = new JLabel("Choose available Financial Advisor:");
+        JTextField advisorField = new JTextField(20); // Could be a JComboBox in a real app
+
+        // Label and field for "Platform to use:"
+        JLabel platformLabel = new JLabel("Platform to use:");
+        JTextField platformField = new JTextField(20); // Could be a JComboBox in a real app
+
+        // Label and field for "Date for Consultation:"
+        JLabel dateLabel = new JLabel("Date for Consultation:");
+        JTextField dateField = new JTextField(20);
+
+        // --- 3. Add the components to the form panel ---
+        // Add them in pairs: Label then Text Field
+        formPanel.add(reasonLabel);
+        formPanel.add(reasonField);
+
+        formPanel.add(advisorLabel);
+        formPanel.add(advisorField);
+
+        formPanel.add(platformLabel);
+        formPanel.add(platformField);
+
+        formPanel.add(dateLabel);
+        formPanel.add(dateField);
+
+        // --- 4. Show the custom panel inside a JOptionPane ---
+
+        // The first argument is the parent frame (where the dialog pops up).
+        // The second argument is the custom component (our formPanel) to display.
+        // The third argument is the Title of the dialog.
+        // The fourth argument is the type of message (PLAIN_MESSAGE removes the icon).
+        int result = JOptionPane.showConfirmDialog(
+                parentComponent, // Parent component
+                formPanel, // The custom panel containing the form fields
+                "Consultation Appointment", // Title of the dialog box
+                JOptionPane.OK_CANCEL_OPTION, // Show OK and Cancel buttons
+                JOptionPane.PLAIN_MESSAGE // No icon
+        );
+
+        // --- 5. Handle the result (what the user clicked) ---
+        if (result == JOptionPane.OK_OPTION) {
+            // The user clicked "OK" (or "Request Consultation" in your picture's style)
+            // You can now get the text the user typed:
+            String reason = reasonField.getText();
+            String advisor = advisorField.getText();
+            String platform = platformField.getText();
+            String date = dateField.getText();
+
+            // Here you would put the code to save or process this information
+            System.out.println("--- Consultation Requested ---");
+            System.out.println("Reason: " + reason);
+            System.out.println("Advisor: " + advisor);
+            System.out.println("Platform: " + platform);
+            System.out.println("Date: " + date);
+        } else {
+            // The user clicked "Cancel" or closed the dialog
+            System.out.println("Consultation request cancelled.");
+        }
     }
 
     public static void main(String[] args) {
