@@ -36,6 +36,16 @@ public class UserDashboard extends JFrame {
     private JScrollPane logsScrollPane;
     private JTextField nameField, amountField, intField, minField, payField;
 
+    // Credit Card Labels - Need to update these dynamically
+    private JLabel cardTitleLabel;
+    private JLabel posLabel;
+    private JLabel balValLabel;
+    private JLabel intValLabel;
+    private JLabel ogAmtLabel;
+    private JLabel minPayLabel;
+    private JProgressBar progressBar;
+    private JLabel tosLabel; // Current TOS label in payment panel
+
     // Data lists for visualization
     private List<Debt> auxiliaryDebts = new ArrayList<>();
     private List<Debt> paidOffDebts = new ArrayList<>();
@@ -108,17 +118,20 @@ public class UserDashboard extends JFrame {
         sidebar.setLayout(new GridLayout(8, 1, 0, 25));
         sidebar.setOpaque(false);
         // Position on the far left
-        sidebar.setBounds(10, 150, 80, 600);
+        sidebar.setBounds(20, 150, 100, 600);
 
         // Add buttons using the helper method
-        sidebar.add(createIconButton("Consultation \nAppointment", "Consultation \nAppointment", e -> onAddClicked())); // Changed
-                                                                                                                        // Icon
+        sidebar.add(createIconButton("Consultation \nAppointment", "Consultation \nAppointment",
+                e -> {
+                    new UserConsultation().setVisible(true);
+                    dispose();
+                }));
         sidebar.add(createIconButton("PEEK", "View Top", e -> onPeekClicked()));
         sidebar.add(createIconButton("PAY", "Settle", e -> onSettleClicked()));
         sidebar.add(createIconButton("HISTORY", "History", e -> onHistoryClicked()));
         sidebar.add(createIconButton("DELETE", "Delete", e -> onDeleteClicked()));
         sidebar.add(createIconButton("PROFILE", "Profile", e -> onProfileClicked()));
-
+        sidebar.add(createIconButton("AUXILIARY", "Move TOS to Auxiliary", e -> onAuxiliary()));
         mainLayer.add(sidebar);
     }
 
@@ -137,7 +150,7 @@ public class UserDashboard extends JFrame {
         // 2. Add Debt Panel (Top Right)
         addDebtPanel = createAddDebtPanel();
         // Position: right of tower
-        addDebtPanel.setBounds(1500, 30, 350, 420);
+        addDebtPanel.setBounds(1500, 30, 350, 530);
         mainLayer.add(addDebtPanel);
     }
 
@@ -214,7 +227,7 @@ public class UserDashboard extends JFrame {
         title.setBounds(20, 20, 200, 30);
         panel.add(title);
 
-        JLabel tosLabel = new JLabel("Current TOS: " + getTopName());
+        tosLabel = new JLabel("Current TOS: " + getTopName());
         tosLabel.setForeground(Color.ORANGE.darker());
         tosLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         tosLabel.setBounds(20, 60, 300, 20);
@@ -258,16 +271,17 @@ public class UserDashboard extends JFrame {
         RoundedPanel panel = new RoundedPanel(25, Color.WHITE);
         panel.setLayout(null);
 
-        // We make a simple static layout for the card to match the image
-        JLabel title = new JLabel("Credit Card");
-        title.setFont(new Font("SansSerif", Font.BOLD, 18));
-        title.setBounds(20, 20, 200, 25);
-        panel.add(title);
+        // Title
+        cardTitleLabel = new JLabel("Credit Card");
+        cardTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        cardTitleLabel.setBounds(20, 20, 200, 25);
+        panel.add(cardTitleLabel);
 
-        JLabel pos = new JLabel("Position: 1");
-        pos.setForeground(Color.GRAY);
-        pos.setBounds(20, 45, 100, 20);
-        panel.add(pos);
+        // Position label
+        posLabel = new JLabel("Position: 1");
+        posLabel.setForeground(Color.GRAY);
+        posLabel.setBounds(20, 45, 100, 20);
+        panel.add(posLabel);
 
         // Balance Big
         JLabel balLabel = new JLabel("Current Balance");
@@ -275,10 +289,10 @@ public class UserDashboard extends JFrame {
         balLabel.setBounds(20, 90, 150, 20);
         panel.add(balLabel);
 
-        JLabel balVal = new JLabel("$5,000");
-        balVal.setFont(new Font("SansSerif", Font.BOLD, 28));
-        balVal.setBounds(20, 115, 200, 35);
-        panel.add(balVal);
+        balValLabel = new JLabel("$0.00");
+        balValLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
+        balValLabel.setBounds(20, 115, 200, 35);
+        panel.add(balValLabel);
 
         // Interest
         JLabel intLabel = new JLabel("% Interest Rate");
@@ -286,32 +300,73 @@ public class UserDashboard extends JFrame {
         intLabel.setBounds(250, 90, 150, 20);
         panel.add(intLabel);
 
-        JLabel intVal = new JLabel("18.5%");
-        intVal.setFont(new Font("SansSerif", Font.BOLD, 24));
-        intVal.setForeground(new Color(234, 88, 12)); // Orange text
-        intVal.setBounds(250, 115, 150, 35);
-        panel.add(intVal);
+        intValLabel = new JLabel("0.0%");
+        intValLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        intValLabel.setForeground(new Color(234, 88, 12)); // Orange text
+        intValLabel.setBounds(250, 115, 150, 35);
+        panel.add(intValLabel);
 
         // Progress Bar
-        JProgressBar bar = new JProgressBar();
-        bar.setValue(30);
-        bar.setBounds(20, 170, 360, 8);
-        bar.setForeground(new Color(234, 88, 12));
-        bar.setBackground(new Color(240, 240, 240));
-        bar.setBorderPainted(false);
-        panel.add(bar);
+        progressBar = new JProgressBar();
+        progressBar.setValue(0);
+        progressBar.setBounds(20, 170, 360, 8);
+        progressBar.setForeground(new Color(234, 88, 12));
+        progressBar.setBackground(new Color(240, 240, 240));
+        progressBar.setBorderPainted(false);
+        panel.add(progressBar);
 
-        JLabel ogAmt = new JLabel("Original Amount: $5,000");
-        ogAmt.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        ogAmt.setBounds(20, 190, 150, 20);
-        panel.add(ogAmt);
+        // Original amount label
+        ogAmtLabel = new JLabel("Original Amount: $0.00");
+        ogAmtLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        ogAmtLabel.setBounds(20, 190, 200, 20);
+        panel.add(ogAmtLabel);
 
-        JLabel minPay = new JLabel("Min Payment: $150");
-        minPay.setFont(new Font("SansSerif", Font.BOLD, 12));
-        minPay.setBounds(250, 190, 150, 20);
-        panel.add(minPay);
+        // Minimum payment label
+        minPayLabel = new JLabel("Min Payment: $0.00");
+        minPayLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        minPayLabel.setBounds(250, 190, 150, 20);
+        panel.add(minPayLabel);
 
         return panel;
+    }
+
+    private void updateCreditCardPanel() {
+        List<Debt> activeDebts = manager.getStackForVisualization();
+        if (activeDebts != null && !activeDebts.isEmpty()) {
+            Debt topDebt = activeDebts.get(0); // Top of stack is first element
+
+            // Update card title
+            cardTitleLabel.setText(topDebt.getName());
+
+            // Update position (always 1 for TOS)
+            posLabel.setText("Position: 1 (TOS)");
+
+            // Update current balance
+            balValLabel.setText(String.format("$%,.2f", topDebt.getCurrentBalance()));
+
+            // Update interest rate
+            intValLabel.setText(String.format("%.1f%%", topDebt.getInterestRate()));
+
+            // Update original amount
+            ogAmtLabel.setText(String.format("Original Amount: $%,.2f", topDebt.getOriginalAmount()));
+
+            // Update minimum payment
+            minPayLabel.setText(String.format("Min Payment: $%,.2f", topDebt.getMinimumPayment()));
+
+            // Update progress bar (percentage paid)
+            double progress = ((topDebt.getOriginalAmount() - topDebt.getCurrentBalance())
+                    / topDebt.getOriginalAmount()) * 100;
+            progressBar.setValue((int) Math.min(100, Math.max(0, progress)));
+        } else {
+            // No active debts - show defaults
+            cardTitleLabel.setText("No Active Debt");
+            posLabel.setText("Position: N/A");
+            balValLabel.setText("$0.00");
+            intValLabel.setText("0.0%");
+            ogAmtLabel.setText("Original Amount: $0.00");
+            minPayLabel.setText("Min Payment: $0.00");
+            progressBar.setValue(0);
+        }
     }
 
     private JPanel createEventCalendarPanel() {
@@ -575,15 +630,30 @@ public class UserDashboard extends JFrame {
             if (top != null) {
                 top.makePayment(amt);
                 log("PAID: $" + amt + " to " + top.getName());
+
+                // Check if debt is paid off
                 if (top.isPaidOff()) {
-                    paidOffDebts.add(controller.getManager().popDebt());
-                    log("COMPLETED: " + top.getName());
+                    // Move to paid-off debts
+                    Debt paidOffDebt = controller.getManager().popDebt();
+                    paidOffDebts.add(paidOffDebt);
+                    log("COMPLETED: " + top.getName() + " is now paid off!");
+
+                    // Check if there's a new TOS and move it from auxiliary if needed
+                    if (controller.getManager().peekTOS() == null && !auxiliaryDebts.isEmpty()) {
+                        // Move the top debt from auxiliary back to active
+                        Debt newActive = auxiliaryDebts.remove(0);
+                        controller.getManager().pushDebt(newActive);
+                        log("MOVED: " + newActive.getName() + " from auxiliary to active");
+                    }
                 }
+
                 payField.setText("0.00");
                 refreshAll();
+            } else {
+                JOptionPane.showMessageDialog(this, "No active debt to pay!");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid payment");
+            JOptionPane.showMessageDialog(this, "Invalid payment amount");
         }
     }
 
@@ -593,8 +663,14 @@ public class UserDashboard extends JFrame {
     }
 
     private void refreshAll() {
+        // Update TOS label in payment panel
+        tosLabel.setText("Current TOS: " + getTopName());
+
+        // Update credit card panel
+        updateCreditCardPanel();
+
+        // Repaint everything
         towerContainer.repaint();
-        // Update labels in panels if needed
         mainLayer.revalidate();
         mainLayer.repaint();
     }
@@ -611,9 +687,31 @@ public class UserDashboard extends JFrame {
 
     private void onPeekClicked() {
         Debt d = controller.getManager().peekTOS();
-        if (d != null)
-            auxiliaryDebts.add(controller.getManager().popDebt());
-        refreshAll();
+        if (d != null) {
+            JOptionPane.showMessageDialog(this,
+                    "Top of Stack:\n" +
+                            "Name: " + d.getName() + "\n" +
+                            "Balance: $" + String.format("%.2f", d.getCurrentBalance()) + "\n" +
+                            "Interest: " + d.getInterestRate() + "%\n" +
+                            "Min Payment: $" + String.format("%.2f", d.getMinimumPayment()),
+                    "Top of Stack Details",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "No active debts!");
+        }
+    }
+
+    private void onAuxiliary() {
+        Debt top = controller.getManager().peekTOS();
+        if (top != null) {
+            // Move TOS to auxiliary
+            Debt movedDebt = controller.getManager().popDebt();
+            auxiliaryDebts.add(0, movedDebt); // Add to beginning (top of auxiliary)
+            log("MOVED: " + movedDebt.getName() + " from active to auxiliary");
+            refreshAll();
+        } else {
+            JOptionPane.showMessageDialog(this, "No active debt to move!");
+        }
     }
 
     private void onSettleClicked() {
@@ -621,9 +719,21 @@ public class UserDashboard extends JFrame {
     }
 
     private void onDeleteClicked() {
-        if (controller.getManager().peekTOS() != null)
-            controller.getManager().popDebt();
-        refreshAll();
+        Debt top = controller.getManager().peekTOS();
+        if (top != null) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Delete " + top.getName() + "?\nBalance: $" + String.format("%.2f", top.getCurrentBalance()),
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                controller.getManager().popDebt();
+                log("DELETED: " + top.getName());
+                refreshAll();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "No active debt to delete!");
+        }
     }
 
     private void onHistoryClicked() {
@@ -632,6 +742,16 @@ public class UserDashboard extends JFrame {
     }
 
     private void onProfileClicked() {
+        // Show user profile information
+        JOptionPane.showMessageDialog(this,
+                "User Profile\n" +
+                        "Active Debts: "
+                        + (manager.getStackForVisualization() != null ? manager.getStackForVisualization().size() : 0)
+                        + "\n" +
+                        "Auxiliary Debts: " + auxiliaryDebts.size() + "\n" +
+                        "Paid-off Debts: " + paidOffDebts.size(),
+                "Profile Summary",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void main(String[] args) {

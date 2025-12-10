@@ -278,6 +278,7 @@ public class UserConsultation extends JFrame {
         sidebar.setOpaque(false);
         sidebar.setBorder(new EmptyBorder(0, 0, 0, 0));
 
+
         // Add buttons using the helper method. Icons are replaced with Unicode/emojis.
         // Dashboard
         sidebar.add(createSidebarButton("DASHBOARD", "\u2689", e -> System.out.println("Dashboard clicked")));
