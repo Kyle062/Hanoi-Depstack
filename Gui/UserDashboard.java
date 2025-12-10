@@ -147,17 +147,17 @@ public class UserDashboard extends JFrame {
 
         // 1. Credit Card Panel (Bottom Left)
         cardPanel = createCardPanel();
-        cardPanel.setBounds(180, startY, 400, height);
+        cardPanel.setBounds(150, startY, 700, height);
         mainLayer.add(cardPanel);
 
         // 2. Make Payment Panel (Bottom Middle)
         paymentPanel = createPaymentPanel();
-        paymentPanel.setBounds(900, startY, 430, height);
+        paymentPanel.setBounds(870, startY, 500, height);
         mainLayer.add(paymentPanel);
 
         // 3. Event Calendar (Bottom Right) - NEW
         calendarPanel = createEventCalendarPanel();
-        calendarPanel.setBounds(1400, startY, 430, height);
+        calendarPanel.setBounds(1400, startY, 500, height);
         mainLayer.add(calendarPanel);
     }
 
