@@ -152,12 +152,12 @@ public class UserDashboard extends JFrame {
 
         // 2. Make Payment Panel (Bottom Middle)
         paymentPanel = createPaymentPanel();
-        paymentPanel.setBounds(530, startY, 430, height);
+        paymentPanel.setBounds(900, startY, 430, height);
         mainLayer.add(paymentPanel);
 
         // 3. Event Calendar (Bottom Right) - NEW
         calendarPanel = createEventCalendarPanel();
-        calendarPanel.setBounds(1500, startY, 350, height);
+        calendarPanel.setBounds(1400, startY, 430, height);
         mainLayer.add(calendarPanel);
     }
 
