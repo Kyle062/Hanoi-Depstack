@@ -389,7 +389,6 @@ public class FAClient extends JFrame {
 
         final BufferedImage finalBgImage = bgImage;
 
-        // Start the GUI on the Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(() -> {
             FAClient frame = new FAClient(finalBgImage);
             frame.setVisible(true);

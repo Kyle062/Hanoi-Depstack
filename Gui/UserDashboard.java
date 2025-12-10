@@ -137,17 +137,17 @@ public class UserDashboard extends JFrame {
         // 2. Add Debt Panel (Top Right)
         addDebtPanel = createAddDebtPanel();
         // Position: right of tower
-        addDebtPanel.setBounds(980, 30, 350, 420);
+        addDebtPanel.setBounds(1500, 30, 350, 420);
         mainLayer.add(addDebtPanel);
     }
 
     private void createBottomRow() {
-        int startY = 470; // Y position for the bottom row
+        int startY = 580; // Y position for the bottom row
         int height = 280; // Height of bottom panels
 
         // 1. Credit Card Panel (Bottom Left)
         cardPanel = createCardPanel();
-        cardPanel.setBounds(110, startY, 400, height);
+        cardPanel.setBounds(180, startY, 400, height);
         mainLayer.add(cardPanel);
 
         // 2. Make Payment Panel (Bottom Middle)
@@ -157,7 +157,7 @@ public class UserDashboard extends JFrame {
 
         // 3. Event Calendar (Bottom Right) - NEW
         calendarPanel = createEventCalendarPanel();
-        calendarPanel.setBounds(980, startY, 350, height);
+        calendarPanel.setBounds(1500, startY, 350, height);
         mainLayer.add(calendarPanel);
     }
 
@@ -347,7 +347,7 @@ public class UserDashboard extends JFrame {
         // Logs go below the bottom row
         JPanel logContainer = new JPanel(new BorderLayout());
         logContainer.setOpaque(false);
-        logContainer.setBounds(110, 770, 1220, 150);
+        logContainer.setBounds(0, 870, 2000, 150);
 
         logsArea = new JTextArea();
         logsArea.setEditable(false);
