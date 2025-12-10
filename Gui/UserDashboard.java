@@ -11,7 +11,9 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class UserDashboard extends JFrame {
@@ -34,7 +36,10 @@ public class UserDashboard extends JFrame {
     // Controls
     private JTextArea logsArea;
     private JScrollPane logsScrollPane;
-    private JTextField nameField, amountField, intField, minField, payField;
+    private JTextField nameField, amountField, intField, minField, payField, dueDateField;
+
+    // Event calendar text area
+    private JTextArea calendarEventsArea;
 
     // Credit Card Labels - Need to update these dynamically
     private JLabel cardTitleLabel;
@@ -49,6 +54,9 @@ public class UserDashboard extends JFrame {
     // Data lists for visualization
     private List<Debt> auxiliaryDebts = new ArrayList<>();
     private List<Debt> paidOffDebts = new ArrayList<>();
+
+    // Date formatter for event calendar
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d");
 
     public UserDashboard(AppController controller2) {
         manager = controller.getManager();
@@ -209,9 +217,14 @@ public class UserDashboard extends JFrame {
         addLabel(panel, "Minimum Payment ($)", 20, y - 20);
         minField = addTextField(panel, "100.00", 20, y, width, fieldH);
 
+        // Due Date
+        y += gap;
+        addLabel(panel, "Due Date (e.g., Dec 31)", 20, y - 20);
+        dueDateField = addTextField(panel, "Dec 31", 20, y, width, fieldH);
+
         // Button
         JButton pushBtn = createOrangeButton("PUSH TO STACK");
-        pushBtn.setBounds(20, 360, width, 40);
+        pushBtn.setBounds(20, 390, width, 40);
         pushBtn.addActionListener(e -> pushNewDebt());
         panel.add(pushBtn);
 
@@ -245,6 +258,8 @@ public class UserDashboard extends JFrame {
             Debt top = controller.getManager().peekTOS();
             if (top != null)
                 payField.setText(String.format("%.2f", top.getMinimumPayment()));
+            else
+                JOptionPane.showMessageDialog(this, "No active debt to pay!");
         });
         panel.add(minBtn);
 
@@ -255,6 +270,8 @@ public class UserDashboard extends JFrame {
             Debt top = controller.getManager().peekTOS();
             if (top != null)
                 payField.setText(String.format("%.2f", top.getCurrentBalance()));
+            else
+                JOptionPane.showMessageDialog(this, "No active debt to pay!");
         });
         panel.add(fullBtn);
 
@@ -379,23 +396,34 @@ public class UserDashboard extends JFrame {
         panel.add(title);
 
         // Use a text area for the list of events to keep it simple
-        JTextArea events = new JTextArea();
-        events.setText(
-                "November 6: Due for Student Loan with\n" +
-                        "payment $200.\n\n" +
-                        "December 6: Due for Student Loan with\n" +
-                        "payment $200.\n\n" +
-                        "January 6: You will successfully paid-off\n" +
-                        "this day, you are now debt free.");
-        events.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        events.setEditable(false);
-        events.setLineWrap(true);
-        events.setWrapStyleWord(true);
-        events.setOpaque(false); // See through to panel
-        events.setBounds(20, 60, 310, 200);
-        panel.add(events);
+        calendarEventsArea = new JTextArea();
+        calendarEventsArea.setText("");
+        calendarEventsArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        calendarEventsArea.setEditable(false);
+        calendarEventsArea.setLineWrap(true);
+        calendarEventsArea.setWrapStyleWord(true);
+        calendarEventsArea.setOpaque(false); // See through to panel
+
+        JScrollPane scrollPane = new JScrollPane(calendarEventsArea);
+        scrollPane.setBounds(20, 60, 310, 200);
+        scrollPane.setBorder(null);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        panel.add(scrollPane);
 
         return panel;
+    }
+
+    private void addEventToCalendar(String event) {
+        // Get current date
+        Date now = new Date();
+        String dateStr = dateFormat.format(now);
+
+        // Add the event with timestamp
+        calendarEventsArea.append(dateStr + ": " + event + "\n");
+
+        // Scroll to bottom
+        calendarEventsArea.setCaretPosition(calendarEventsArea.getDocument().getLength());
     }
 
     private void createLogsPanel() {
@@ -605,31 +633,86 @@ public class UserDashboard extends JFrame {
 
     private void pushNewDebt() {
         try {
-            String name = nameField.getText();
-            double amt = Double.parseDouble(amountField.getText());
-            double ir = Double.parseDouble(intField.getText());
-            double min = Double.parseDouble(minField.getText());
+            String name = nameField.getText().trim();
+            String amountText = amountField.getText().trim();
+            String intText = intField.getText().trim();
+            String minText = minField.getText().trim();
+            String dueDate = dueDateField.getText().trim();
 
-            controller.getManager().pushDebt(new Debt(name, amt, ir, min));
-            log("PUSH: Added " + name);
+            // Simple validation
+            if (name.isEmpty() || amountText.isEmpty() || intText.isEmpty() || minText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all fields");
+                return;
+            }
+
+            // Parse values with simple error handling
+            double amt, ir, min;
+            try {
+                amt = Double.parseDouble(amountText);
+                ir = Double.parseDouble(intText);
+                min = Double.parseDouble(minText);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Please enter valid numbers for amount, interest, and minimum payment");
+                return;
+            }
+
+            // Create and add the debt
+            Debt newDebt = new Debt(name, amt, ir, min);
+            controller.getManager().pushDebt(newDebt);
+
+            log("PUSH: Added " + name + " ($" + String.format("%.2f", amt) + ")");
+
+            // Add to event calendar if due date is provided
+            if (!dueDate.isEmpty()) {
+                addEventToCalendar("Due for " + name + " on " + dueDate + " - Payment: $" + String.format("%.2f", min));
+            } else {
+                addEventToCalendar("Added new debt: " + name + " ($" + String.format("%.2f", amt) + ")");
+            }
 
             // Clear fields
             nameField.setText("");
             amountField.setText("");
+            intField.setText("");
+            minField.setText("");
+            dueDateField.setText("");
 
             refreshAll();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid numbers");
+
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error adding debt. Please check your inputs.");
         }
     }
 
     private void makePayment() {
         try {
-            double amt = Double.parseDouble(payField.getText());
+            String paymentText = payField.getText().trim();
+            if (paymentText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a payment amount");
+                return;
+            }
+
+            double amt;
+            try {
+                amt = Double.parseDouble(paymentText);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid number for payment");
+                return;
+            }
+
             Debt top = controller.getManager().peekTOS();
             if (top != null) {
-                top.makePayment(amt);
-                log("PAID: $" + amt + " to " + top.getName());
+                if (amt <= 0) {
+                    JOptionPane.showMessageDialog(this, "Payment amount must be greater than 0");
+                    return;
+                }
+
+                // Allow overpayment (just pay off the full balance)
+                double paymentAmount = Math.min(amt, top.getCurrentBalance());
+
+                top.makePayment(paymentAmount);
+                log("PAID: $" + String.format("%.2f", paymentAmount) + " to " + top.getName());
 
                 // Check if debt is paid off
                 if (top.isPaidOff()) {
@@ -637,6 +720,9 @@ public class UserDashboard extends JFrame {
                     Debt paidOffDebt = controller.getManager().popDebt();
                     paidOffDebts.add(paidOffDebt);
                     log("COMPLETED: " + top.getName() + " is now paid off!");
+
+                    // Add to event calendar
+                    addEventToCalendar(top.getName() + " has been successfully paid off!");
 
                     // Check if there's a new TOS and move it from auxiliary if needed
                     if (controller.getManager().peekTOS() == null && !auxiliaryDebts.isEmpty()) {
@@ -652,8 +738,10 @@ public class UserDashboard extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "No active debt to pay!");
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Invalid payment amount");
+        } catch (NumberFormatException e) {
+
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error making payment. Please try again.");
         }
     }
 
@@ -689,11 +777,12 @@ public class UserDashboard extends JFrame {
         Debt d = controller.getManager().peekTOS();
         if (d != null) {
             JOptionPane.showMessageDialog(this,
-                    "Top of Stack:\n" +
+                    "Top of Stack Details:\n" +
                             "Name: " + d.getName() + "\n" +
-                            "Balance: $" + String.format("%.2f", d.getCurrentBalance()) + "\n" +
-                            "Interest: " + d.getInterestRate() + "%\n" +
-                            "Min Payment: $" + String.format("%.2f", d.getMinimumPayment()),
+                            "Current Balance: $" + String.format("%.2f", d.getCurrentBalance()) + "\n" +
+                            "Interest Rate: " + String.format("%.1f", d.getInterestRate()) + "%\n" +
+                            "Minimum Payment: $" + String.format("%.2f", d.getMinimumPayment()) + "\n" +
+                            "Original Amount: $" + String.format("%.2f", d.getOriginalAmount()),
                     "Top of Stack Details",
                     JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -704,11 +793,19 @@ public class UserDashboard extends JFrame {
     private void onAuxiliary() {
         Debt top = controller.getManager().peekTOS();
         if (top != null) {
-            // Move TOS to auxiliary
-            Debt movedDebt = controller.getManager().popDebt();
-            auxiliaryDebts.add(0, movedDebt); // Add to beginning (top of auxiliary)
-            log("MOVED: " + movedDebt.getName() + " from active to auxiliary");
-            refreshAll();
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Move " + top.getName() + " to auxiliary?\nBalance: $"
+                            + String.format("%.2f", top.getCurrentBalance()),
+                    "Confirm Move to Auxiliary",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Move TOS to auxiliary
+                Debt movedDebt = controller.getManager().popDebt();
+                auxiliaryDebts.add(0, movedDebt); // Add to beginning (top of auxiliary)
+                log("MOVED: " + movedDebt.getName() + " from active to auxiliary");
+                refreshAll();
+            }
         } else {
             JOptionPane.showMessageDialog(this, "No active debt to move!");
         }
@@ -722,13 +819,15 @@ public class UserDashboard extends JFrame {
         Debt top = controller.getManager().peekTOS();
         if (top != null) {
             int confirm = JOptionPane.showConfirmDialog(this,
-                    "Delete " + top.getName() + "?\nBalance: $" + String.format("%.2f", top.getCurrentBalance()),
+                    "Are you sure you want to delete " + top.getName() + "?\n" +
+                            "Balance: $" + String.format("%.2f", top.getCurrentBalance()),
                     "Confirm Delete",
                     JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 controller.getManager().popDebt();
-                log("DELETED: " + top.getName());
+                log("DELETED: " + top.getName() + " (Balance: $" + String.format("%.2f", top.getCurrentBalance())
+                        + ")");
                 refreshAll();
             }
         } else {
@@ -739,15 +838,24 @@ public class UserDashboard extends JFrame {
     private void onHistoryClicked() {
         boolean vis = logsScrollPane.isVisible();
         logsScrollPane.setVisible(!vis);
+        log("Log panel visibility toggled: " + (!vis ? "Visible" : "Hidden"));
     }
 
     private void onProfileClicked() {
         // Show user profile information
+        int activeDebts = manager.getStackForVisualization() != null ? manager.getStackForVisualization().size() : 0;
+        double totalBalance = 0;
+
+        if (activeDebts > 0) {
+            for (Debt debt : manager.getStackForVisualization()) {
+                totalBalance += debt.getCurrentBalance();
+            }
+        }
+
         JOptionPane.showMessageDialog(this,
-                "User Profile\n" +
-                        "Active Debts: "
-                        + (manager.getStackForVisualization() != null ? manager.getStackForVisualization().size() : 0)
-                        + "\n" +
+                "User Profile:\n" +
+                        "Active Debts: " + activeDebts + "\n" +
+                        "Total Active Balance: $" + String.format("%.2f", totalBalance) + "\n" +
                         "Auxiliary Debts: " + auxiliaryDebts.size() + "\n" +
                         "Paid-off Debts: " + paidOffDebts.size(),
                 "Profile Summary",
