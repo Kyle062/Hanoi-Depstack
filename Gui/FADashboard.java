@@ -59,13 +59,44 @@ public class FADashboard extends JFrame {
     private final Color SIDEBAR_ACTIVE_COLOR = new Color(241, 122, 80); // ORANGE_ACCENT
     private final Color SIDEBAR_HOVER_COLOR = new Color(255, 140, 100);
 
+    // Component positions - YOU HAVE FULL CONTROL OVER THESE VALUES
+    private int sidebarX = 10;
+    private int sidebarY = 100;
+    private int sidebarWidth = 80;
+    private int sidebarHeight = 600;
+
+    private int towerX = 100;
+    private int towerY = 30;
+    private int towerWidth = 600;
+    private int towerHeight = 400;
+
+    private int reportCreationX = 1400;
+    private int reportCreationY = 30;
+    private int reportCreationWidth = 450;
+    private int reportCreationHeight = 400;
+
+    private int reportsX = 90;
+    private int reportsY = 450;
+    private int reportsWidth = 600;
+    private int reportsHeight = 100;
+
+    private int appointmentX = 710;
+    private int appointmentY = 450;
+    private int appointmentWidth = 450;
+    private int appointmentHeight = 260;
+
+    private int logsX = 90;
+    private int logsY = 570;
+    private int logsWidth = 600;
+    private int logsHeight = 140;
+
     public FADashboard(AppController controller2) {
         manager = controller.getManager();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setTitle("Hanoi Debt Tower Dashboard");
-        setLayout(new BorderLayout());
+        setLayout(null); // Set layout to null for manual positioning
 
         initUI();
         setVisible(true);
@@ -73,13 +104,16 @@ public class FADashboard extends JFrame {
 
     private void initUI() {
         layeredPane = new JLayeredPane();
-        add(layeredPane, BorderLayout.CENTER);
+        layeredPane.setBounds(0, 0, getWidth(), getHeight());
+        layeredPane.setLayout(null);
+        add(layeredPane);
 
-        // Add resize listener
+        // Add resize listener - KEPT BUT SIMPLIFIED
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                adjustLayout(getWidth(), getHeight());
+                // Only update background and main layer sizes
+                updateBaseLayout(getWidth(), getHeight());
             }
         });
 
@@ -91,84 +125,27 @@ public class FADashboard extends JFrame {
         mainLayer.setBounds(0, 0, getWidth(), getHeight());
         layeredPane.add(mainLayer, JLayeredPane.PALETTE_LAYER);
 
-        // Create all components
+        // Create all components with your manual positions
         createSidebar();
         createTopRow();
         createBottomRow();
 
-        // Initial layout adjustment
-        adjustLayout(getWidth(), getHeight());
+        // Update base layout initially
+        updateBaseLayout(getWidth(), getHeight());
     }
 
-    private void adjustLayout(int screenWidth, int screenHeight) {
+    private void updateBaseLayout(int screenWidth, int screenHeight) {
+        // Update layered pane bounds
+        layeredPane.setBounds(0, 0, screenWidth, screenHeight);
+
         // Update background
-        if (backgroundLabel != null) {
-            backgroundLabel.setBounds(0, 0, screenWidth, screenHeight);
-        }
+        backgroundLabel.setBounds(0, 0, screenWidth, screenHeight);
 
         // Update main layer
-        if (mainLayer != null) {
-            mainLayer.setBounds(0, 0, screenWidth, screenHeight);
-        }
+        mainLayer.setBounds(0, 0, screenWidth, screenHeight);
 
-        // Adjust all components based on screen size
-        adjustComponentPositions(screenWidth, screenHeight);
-    }
-
-    private void adjustComponentPositions(int screenWidth, int screenHeight) {
-        // Calculate positions based on screen size
-        int sidebarWidth = 80;
-        int leftMargin = 90; // Space from sidebar
-
-        // Top row positions
-        int topY = 30;
-        int topRowHeight = 400;
-
-        // Bottom row positions
-        int bottomY = 450;
-        int bottomRowHeight = 260;
-
-        // Component widths
-        int towerWidth = (int) (screenWidth * 0.35);
-        towerWidth = Math.max(500, Math.min(towerWidth, 700));
-
-        int reportWidth = (int) (screenWidth * 0.25);
-        reportWidth = Math.max(350, Math.min(reportWidth, 500));
-
-        // ADJUST: Sidebar position and size
-        if (sidebar != null) {
-            sidebar.setBounds(10, 100, sidebarWidth, screenHeight - 200);
-        }
-
-        // ADJUST: Tower container position and size
-        if (towerContainer != null) {
-            towerContainer.setBounds(leftMargin, topY, towerWidth, topRowHeight);
-            if (towerVis != null) {
-                towerVis.setBounds(0, 0, towerWidth, topRowHeight);
-            }
-        }
-
-        // ADJUST: Report creation panel position and size
-        if (reportCreationPanel != null) {
-            int reportX = leftMargin + towerWidth + 40;
-            reportCreationPanel.setBounds(reportX, topY, reportWidth, topRowHeight);
-        }
-
-        // ADJUST: Reports panel position and size
-        if (reportsPanel != null) {
-            reportsPanel.setBounds(leftMargin, bottomY, towerWidth, 100);
-        }
-
-        // ADJUST: Logs panel position and size
-        if (logsPanel != null) {
-            logsPanel.setBounds(leftMargin, bottomY + 120, towerWidth, bottomRowHeight - 120);
-        }
-
-        // ADJUST: Appointment schedule panel position and size
-        if (appointmentSchedulePanel != null) {
-            int scheduleX = leftMargin + towerWidth + 40;
-            appointmentSchedulePanel.setBounds(scheduleX, bottomY, reportWidth, bottomRowHeight);
-        }
+        // Repaint
+        repaint();
     }
 
     private void setupBackground() {
@@ -204,9 +181,7 @@ public class FADashboard extends JFrame {
         sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setOpaque(false);
-
-        // ADJUST: Sidebar position (x, y, width, height)
-        sidebar.setBounds(10, 100, 80, 600);
+        sidebar.setBounds(sidebarX, sidebarY, sidebarWidth, sidebarHeight);
 
         // Title/Header (HANOI)
         JLabel hanoi = new JLabel("HANOI");
@@ -532,109 +507,78 @@ public class FADashboard extends JFrame {
         profileDialog.setVisible(true);
     }
 
-    // Rest of the class remains the same (createTopRow, createBottomRow, etc.)
-    // ... [All other methods remain unchanged] ...
-
     private void createTopRow() {
         // Tower Panel
         towerContainer = new RoundedPanel(20, Color.WHITE);
         towerContainer.setLayout(null);
-
-        // ADJUST: Tower container position (x, y, width, height)
-        towerContainer.setBounds(90, 30, 600, 400);
+        towerContainer.setBounds(towerX, towerY, towerWidth, towerHeight);
 
         towerVis = new TowerVisualizationPanel();
-
-        // ADJUST: Tower visualization position within container (x, y, width, height)
-        towerVis.setBounds(0, 0, 600, 400);
+        towerVis.setBounds(0, 0, towerWidth, towerHeight);
         towerContainer.add(towerVis);
         mainLayer.add(towerContainer);
 
         // Create Report Panel
         reportCreationPanel = createReportCreationPanel();
-
-        // ADJUST: Report creation panel position (x, y, width, height)
-        reportCreationPanel.setBounds(710, 30, 450, 400);
+        reportCreationPanel.setLayout(null);
+        reportCreationPanel.setBounds(reportCreationX, reportCreationY, reportCreationWidth, reportCreationHeight);
         mainLayer.add(reportCreationPanel);
     }
 
     private void createBottomRow() {
-        int startY = 450;
-        int height = 260;
-
         // Reports Panel
         reportsPanel = createReportsPanel();
-
-        // ADJUST: Reports panel position (x, y, width, height)
-        reportsPanel.setBounds(90, startY, 600, 100);
+        reportsPanel.setBounds(reportsX, reportsY, reportsWidth, reportsHeight);
         mainLayer.add(reportsPanel);
 
         // Appointment Schedule Panel
         appointmentSchedulePanel = createAppointmentSchedulePanel();
-
-        // ADJUST: Appointment schedule panel position (x, y, width, height)
-        appointmentSchedulePanel.setBounds(710, startY, 450, height);
+        appointmentSchedulePanel.setBounds(appointmentX, appointmentY, appointmentWidth, appointmentHeight);
         mainLayer.add(appointmentSchedulePanel);
 
         // Logs Panel
         logsPanel = createLogsPanel();
-
-        // ADJUST: Logs panel position (x, y, width, height)
-        logsPanel.setBounds(90, startY + 120, 600, height - 120);
+        logsPanel.setBounds(logsX, logsY, logsWidth, logsHeight);
         mainLayer.add(logsPanel);
     }
 
     private JPanel createReportCreationPanel() {
         RoundedPanel panel = new RoundedPanel(20, Color.WHITE);
         panel.setLayout(null);
-
-        // ADJUST: Report creation panel position (x, y, width, height)
-        panel.setBounds(710, 30, 450, 400);
+        panel.setBounds(0, 0, reportCreationWidth, reportCreationHeight);
 
         JLabel title = new JLabel("Create Report");
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
-
-        // ADJUST: Title position within panel (x, y, width, height)
         title.setBounds(20, 20, 200, 30);
         panel.add(title);
 
         int y = 70;
         int gap = 55;
         int fieldH = 30;
-        int width = 410;
+        int width = reportCreationWidth - 40; // 20px padding on both sides
 
         // Total Client Appointments
         addLabel(panel, "Total Client Appointments:", 20, y - 20);
-
-        // ADJUST: Appointments field position (x, y, width, height)
         appointmentsField = addTextField(panel, "", 20, y, width, fieldH);
 
         // Total Solved
         y += gap;
         addLabel(panel, "Total Solved:", 20, y - 20);
-
-        // ADJUST: Solved field position (x, y, width, height)
         solvedField = addTextField(panel, "", 20, y, width, fieldH);
 
         // Total Failed
         y += gap;
         addLabel(panel, "Total Failed:", 20, y - 20);
-
-        // ADJUST: Failed field position (x, y, width, height)
         failedField = addTextField(panel, "", 20, y, width, fieldH);
 
         // Total Added
         y += gap;
         addLabel(panel, "Total Added:", 20, y - 20);
-
-        // ADJUST: Added field position (x, y, width, height)
         addedField = addTextField(panel, "", 20, y, width, fieldH);
 
         // PUSH Button
         JButton pushBtn = createOrangeButton("PUSH");
-
-        // ADJUST: Push button position (x, y, width, height)
-        pushBtn.setBounds(20, 340, width, 40);
+        pushBtn.setBounds(20, reportCreationHeight - 60, width, 40);
         pushBtn.addActionListener(e -> {
             log("PUSH button pressed.");
             log("Creating report with data:");
@@ -657,15 +601,11 @@ public class FADashboard extends JFrame {
     private JPanel createReportsPanel() {
         JPanel container = new JPanel(null);
         container.setOpaque(false);
-
-        // ADJUST: Reports container position (x, y, width, height)
-        container.setBounds(90, 450, 600, 100);
+        container.setBounds(0, 0, reportsWidth, reportsHeight);
 
         JLabel reportsTitle = new JLabel("REPORTS");
         reportsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
         reportsTitle.setForeground(Color.WHITE);
-
-        // ADJUST: Reports title position (x, y, width, height)
         reportsTitle.setBounds(0, 0, 100, 20);
         container.add(reportsTitle);
 
@@ -674,9 +614,7 @@ public class FADashboard extends JFrame {
         reportBoxes.add(createReportBox("TOTAL CLIENTS", "23,113", DARK_ORANGE_REPORT));
         reportBoxes.add(createReportBox("TOTAL APPOINTMENT", "21", BLUE_ACCENT));
         reportBoxes.add(createReportBox("SOLVED", "11241 users", RED_REPORT));
-
-        // ADJUST: Report boxes position (x, y, width, height)
-        reportBoxes.setBounds(0, 25, 600, 75);
+        reportBoxes.setBounds(0, 25, reportsWidth, 75);
         container.add(reportBoxes);
 
         return container;
@@ -685,8 +623,6 @@ public class FADashboard extends JFrame {
     private JPanel createReportBox(String title, String value, Color bgColor) {
         RoundedPanel panel = new RoundedPanel(10, bgColor);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-        // ADJUST: Report box size (width, height)
         panel.setPreferredSize(new Dimension(190, 75));
 
         JLabel titleLabel = new JLabel(title);
@@ -709,14 +645,10 @@ public class FADashboard extends JFrame {
     private JPanel createAppointmentSchedulePanel() {
         RoundedPanel panel = new RoundedPanel(10, Color.WHITE);
         panel.setLayout(null);
-
-        // ADJUST: Appointment panel position (x, y, width, height)
-        panel.setBounds(710, 450, 450, 260);
+        panel.setBounds(0, 0, appointmentWidth, appointmentHeight);
 
         JLabel title = new JLabel("Appointment Schedule");
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
-
-        // ADJUST: Title position within panel (x, y, width, height)
         title.setBounds(20, 20, 300, 30);
         panel.add(title);
 
@@ -732,18 +664,14 @@ public class FADashboard extends JFrame {
         scheduleText.setLineWrap(true);
         scheduleText.setWrapStyleWord(true);
         scheduleText.setOpaque(false);
-
-        // ADJUST: Schedule text position (x, y, width, height)
-        scheduleText.setBounds(20, 60, 410, 100);
+        scheduleText.setBounds(20, 60, appointmentWidth - 40, 100);
         panel.add(scheduleText);
 
         int lineY = 170;
         for (int i = 0; i < 4; i++) {
             JLabel line = new JLabel();
             line.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY.brighter()));
-
-            // ADJUST: Line position (x, y, width, height)
-            line.setBounds(20, lineY + (i * 20), 410, 1);
+            line.setBounds(20, lineY + (i * 20), appointmentWidth - 40, 1);
             panel.add(line);
         }
 
@@ -753,9 +681,7 @@ public class FADashboard extends JFrame {
     private JPanel createLogsPanel() {
         JPanel logContainer = new JPanel(new BorderLayout());
         logContainer.setBackground(Color.BLACK);
-
-        // ADJUST: Logs container position (x, y, width, height)
-        logContainer.setBounds(90, 570, 600, 140);
+        logContainer.setBounds(0, 0, logsWidth, logsHeight);
 
         JLabel logsTitle = new JLabel("OPERATION LOGS");
         logsTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -786,16 +712,12 @@ public class FADashboard extends JFrame {
         JLabel l = new JLabel(text);
         l.setFont(new Font("SansSerif", Font.PLAIN, 12));
         l.setForeground(Color.BLACK);
-
-        // ADJUST: Label position (x, y, width, height)
         l.setBounds(x, y, 300, 20);
         p.add(l);
     }
 
     private JTextField addTextField(JPanel p, String ph, int x, int y, int w, int h) {
         JTextField tf = new JTextField();
-
-        // ADJUST: Text field position and size (x, y, width, height)
         tf.setBounds(x, y, w, h);
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220)),
@@ -863,15 +785,11 @@ public class FADashboard extends JFrame {
             g2.setFont(new Font("SansSerif", Font.BOLD, 24));
             String title = "THE HANOI DEBT TOWER";
             FontMetrics fm = g2.getFontMetrics();
-
-            // ADJUST: Title position (center horizontally, y=40)
             g2.drawString(title, (w - fm.stringWidth(title)) / 2, 40);
 
             // Base Line
             int baseY = h - 60;
             g2.setColor(new Color(150, 80, 150));
-
-            // ADJUST: Base line position and size (x, y, width, height)
             g2.fillRoundRect(50, baseY, w - 100, 15, 10, 10);
 
             // Columns
@@ -881,15 +799,11 @@ public class FADashboard extends JFrame {
             g2.setColor(TOWER_PILLAR_COLOR);
             for (int i = 0; i < 3; i++) {
                 int cx = colW * i + colW / 2;
-
-                // ADJUST: Pillar position and size (x, y, width, height)
                 g2.fillRoundRect(cx - 5, 80, 10, baseY - 80, 10, 10);
 
                 g2.setColor(Color.BLACK);
                 g2.setFont(new Font("SansSerif", Font.BOLD, 12));
                 String lbl = labels[i];
-
-                // ADJUST: Column label position
                 g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2, baseY + 30);
             }
 
@@ -899,32 +813,25 @@ public class FADashboard extends JFrame {
             int cx = colW / 2;
 
             // Disk 4 (Bottom)
-            // ADJUST: Disk 4 position (centerX, y, width, height)
             drawDisk(g2, cx, baseY - (4 * (brickH + gap)), 180, brickH, RED_DEBT, "Debt Due");
 
             // Disk 3
-            // ADJUST: Disk 3 position (centerX, y, width, height)
             drawDisk(g2, cx, baseY - (3 * (brickH + gap)), 160, brickH, ORANGE_DEBT, "Media Complaince Lead");
 
             // Disk 2
-            // ADJUST: Disk 2 position (centerX, y, width, height)
             drawDisk(g2, cx, baseY - (2 * (brickH + gap)), 140, brickH, YELLOW, "Agile Execution");
 
             // Disk 1 (Top)
-            // ADJUST: Disk 1 position (centerX, y, width, height)
             drawDisk(g2, cx, baseY - (1 * (brickH + gap)), 120, brickH, LIGHT_GREEN, "Appointment");
         }
 
         private void drawDisk(Graphics2D g2, int centerX, int y, int width, int height, Color c, String text) {
-            // ADJUST: Disk position (centerX - width/2, y, width, height)
             g2.setColor(c);
             g2.fillRoundRect(centerX - width / 2, y, width, height, 15, 15);
 
             g2.setColor(Color.WHITE);
             g2.setFont(new Font("SansSerif", Font.BOLD, 10));
             FontMetrics fm = g2.getFontMetrics();
-
-            // ADJUST: Text position (center horizontally, y + height/2 + 3)
             g2.drawString(text, centerX - fm.stringWidth(text) / 2, y + height / 2 + 3);
         }
     }
