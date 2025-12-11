@@ -65,19 +65,19 @@ public class FADashboard extends JFrame {
     private int sidebarWidth = 80;
     private int sidebarHeight = 600;
 
-    private int towerX = 100;
+    private int towerX = 150;
     private int towerY = 30;
-    private int towerWidth = 600;
-    private int towerHeight = 400;
+    private int towerWidth = 1250;
+    private int towerHeight = 620;
 
     private int reportCreationX = 1450;
     private int reportCreationY = 30;
     private int reportCreationWidth = 450;
     private int reportCreationHeight = 500;
 
-    private int reportsX = 200;
-    private int reportsY = 600;
-    private int reportsWidth = 600;
+    private int reportsX = 150;
+    private int reportsY = 670;
+    private int reportsWidth = 1250;
     private int reportsHeight = 100;
 
     private int appointmentX = 1450;
@@ -85,9 +85,9 @@ public class FADashboard extends JFrame {
     private int appointmentWidth = 450;
     private int appointmentHeight = 450;
 
-    private int logsX = 100;
+    private int logsX = 150;
     private int logsY = 800;
-    private int logsWidth = 1330;
+    private int logsWidth = 1250;
     private int logsHeight = 200;
 
     public FADashboard(AppController controller2) {
@@ -602,10 +602,11 @@ public class FADashboard extends JFrame {
         JPanel container = new JPanel(null);
         container.setOpaque(false);
         container.setBounds(0, 0, reportsWidth, reportsHeight);
+        container.setBackground(Color.WHITE);
 
         JLabel reportsTitle = new JLabel("REPORTS");
         reportsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
-        reportsTitle.setForeground(Color.WHITE);
+        reportsTitle.setForeground(Color.BLACK); // CHANGED FROM WHITE TO BLACK
         reportsTitle.setBounds(0, 0, 100, 20);
         container.add(reportsTitle);
 
