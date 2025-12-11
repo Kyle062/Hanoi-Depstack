@@ -6,11 +6,13 @@ public class Debt implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
     private double currentBalance;
+    private double originalAmount; // Added field
     private double interestRate;
     private double minimumPayment;
 
     public Debt(String name, double totalAmount, double interestRate, double minimumPayment) {
         this.name = name;
+        this.originalAmount = totalAmount; // Store original amount
         this.currentBalance = totalAmount;
         this.interestRate = interestRate;
         this.minimumPayment = minimumPayment;
@@ -40,18 +42,16 @@ public class Debt implements Serializable {
         return minimumPayment;
     }
 
-    @Override
-    public String toString() {
-        return String.format("%s: $%.2f", name, currentBalance);
+    public double getOriginalAmount() {
+        return originalAmount;
     }
 
     public double getOriginalBalance() {
-        // TODO: You need to store the original balance separately
-        return currentBalance; // Temporary - you should add a field for originalBalance
+        return originalAmount;
     }
 
-    public int getOriginalAmount() {
-        // TODO: This method name seems wrong - should it return double?
-        return (int) currentBalance; // Temporary fix
+    @Override
+    public String toString() {
+        return String.format("%s: $%.2f (Original: $%.2f)", name, currentBalance, originalAmount);
     }
 }

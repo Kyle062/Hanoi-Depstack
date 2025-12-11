@@ -1,8 +1,11 @@
 package Gui;
 
 import Model.AppController;
+import Model.ConsultationRequest;
+import Model.DataManager;
 import Model.Debt;
 import Model.DebtManager;
+import Model.User;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -18,7 +21,7 @@ import java.util.List;
 
 public class UserDashboard extends JFrame {
 
-    private final static AppController controller = new AppController();
+    private AppController controller;
     private DebtManager manager;
 
     // UI components
@@ -41,7 +44,7 @@ public class UserDashboard extends JFrame {
     // Event calendar text area
     private JTextArea calendarEventsArea;
 
-    // Credit Card Labels - Need to update these dynamically
+    // Credit Card Labels
     private JLabel cardTitleLabel;
     private JLabel posLabel;
     private JLabel balValLabel;
@@ -49,7 +52,7 @@ public class UserDashboard extends JFrame {
     private JLabel ogAmtLabel;
     private JLabel minPayLabel;
     private JProgressBar progressBar;
-    private JLabel tosLabel; // Current TOS label in payment panel
+    private JLabel tosLabel;
 
     // Data lists for visualization
     private List<Debt> auxiliaryDebts = new ArrayList<>();
@@ -58,34 +61,39 @@ public class UserDashboard extends JFrame {
     // Date formatter for event calendar
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d");
 
-    public UserDashboard(AppController controller2) {
-        manager = controller.getManager();
+    public UserDashboard(AppController controller) {
+        this.controller = controller;
+        this.manager = controller.getManager();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Make it full screen
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setTitle("Hanoi Debt Tower Dashboard");
+        setTitle("Hanoi Debt Tower Dashboard - Client");
         setLayout(new BorderLayout());
 
         initUI();
         refreshAll();
         setVisible(true);
+
+        // Add window listener to save data on close
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                controller.saveAllData();
+            }
+        });
     }
 
     private void initUI() {
         layeredPane = new JLayeredPane();
         add(layeredPane, BorderLayout.CENTER);
 
-        // We need to wait for the frame to be visible to get correct sizes
-        // But for now we use a default size to avoid errors
         setSize(1400, 900);
 
         setupBackground();
 
-        // Main layer holds all the controls
         mainLayer = new JPanel(null);
         mainLayer.setOpaque(false);
-        mainLayer.setBounds(0, 0, 1920, 1080); // Large bounds to fit everything
+        mainLayer.setBounds(0, 0, 1920, 1080);
         layeredPane.add(mainLayer, JLayeredPane.PALETTE_LAYER);
 
         createSidebar();
@@ -93,7 +101,6 @@ public class UserDashboard extends JFrame {
         createBottomRow();
         createLogsPanel();
 
-        // Add a component listener to resize background when window changes
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -105,10 +112,7 @@ public class UserDashboard extends JFrame {
 
     private void setupBackground() {
         try {
-            // Load your image
             BufferedImage bg = ImageIO.read(new File("Images/DashboardMainBackground.png"));
-            // We just use the image as an icon, we will scale it in paint if needed
-            // but for simplicity, let's just set it plain
             Image scaled = bg.getScaledInstance(1920, 1080, Image.SCALE_SMOOTH);
             backgroundLabel = new JLabel(new ImageIcon(scaled));
         } catch (IOException e) {
@@ -122,31 +126,57 @@ public class UserDashboard extends JFrame {
 
     private void createSidebar() {
         JPanel sidebar = new JPanel();
-        // Spacing between buttons
-        sidebar.setLayout(new GridLayout(8, 1, 0, 25));
+        sidebar.setLayout(new GridLayout(9, 1, 0, 20));
         sidebar.setOpaque(false);
-        // Position on the far left
-        sidebar.setBounds(20, 150, 100, 600);
+        sidebar.setBounds(20, 150, 100, 650);
 
-        // Add buttons using the helper method
         sidebar.add(createIconButton("Consultation \nAppointment", "Consultation \nAppointment",
-                e -> {
-                    showConsultationDialog(mainLayer);
-                }));
+                e -> showConsultationDialog(mainLayer)));
         sidebar.add(createIconButton("PEEK", "View Top", e -> onPeekClicked()));
         sidebar.add(createIconButton("PAY", "Settle", e -> onSettleClicked()));
         sidebar.add(createIconButton("HISTORY", "History", e -> onHistoryClicked()));
         sidebar.add(createIconButton("DELETE", "Delete", e -> onDeleteClicked()));
         sidebar.add(createIconButton("PROFILE", "Profile", e -> onProfileClicked()));
         sidebar.add(createIconButton("AUXILIARY", "Move TOS to Auxiliary", e -> onAuxiliary()));
+        sidebar.add(createIconButton("LOGOUT", "Logout from system", e -> logout()));
+
         mainLayer.add(sidebar);
     }
 
+    private JButton createIconButton(String text, String tooltip, ActionListener action) {
+        JButton button = new JButton(text);
+        button.setToolTipText(tooltip);
+        button.setBackground(Color.WHITE);
+        button.setForeground(Color.BLACK);
+        button.setFont(new Font("SansSerif", Font.BOLD, 9));
+        button.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        button.setFocusPainted(false);
+        button.addActionListener(action);
+        return button;
+    }
+
+    private void logout() {
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            controller.saveAllData();
+            controller.logout();
+            dispose();
+
+            // Return to login screen
+            SwingUtilities.invokeLater(() -> {
+                new Login(controller).setVisible(true);
+            });
+        }
+    }
+
     private void createTopRow() {
-        // 1. Tower Panel (Top Center/Left)
+        // Tower Panel (Top Center/Left)
         towerContainer = new RoundedPanel(25, Color.WHITE);
         towerContainer.setLayout(null);
-        // Position: x=110 (right of sidebar), y=30
         towerContainer.setBounds(150, 30, 1300, 530);
 
         TowerVisualizationPanel towerVis = new TowerVisualizationPanel();
@@ -154,34 +184,57 @@ public class UserDashboard extends JFrame {
         towerContainer.add(towerVis);
         mainLayer.add(towerContainer);
 
-        // 2. Add Debt Panel (Top Right)
+        // Add Debt Panel (Top Right)
         addDebtPanel = createAddDebtPanel();
-        // Position: right of tower
         addDebtPanel.setBounds(1500, 30, 350, 530);
         mainLayer.add(addDebtPanel);
     }
 
     private void createBottomRow() {
-        int startY = 580; // Y position for the bottom row
-        int height = 280; // Height of bottom panels
+        int startY = 580;
+        int height = 280;
 
-        // 1. Credit Card Panel (Bottom Left)
+        // Credit Card Panel (Bottom Left)
         cardPanel = createCardPanel();
         cardPanel.setBounds(150, startY, 700, height);
         mainLayer.add(cardPanel);
 
-        // 2. Make Payment Panel (Bottom Middle)
+        // Make Payment Panel (Bottom Middle)
         paymentPanel = createPaymentPanel();
         paymentPanel.setBounds(870, startY, 500, height);
         mainLayer.add(paymentPanel);
 
-        // 3. Event Calendar (Bottom Right) - NEW
+        // Event Calendar (Bottom Right)
         calendarPanel = createEventCalendarPanel();
         calendarPanel.setBounds(1400, startY, 500, height);
         mainLayer.add(calendarPanel);
     }
 
-    // --- Panel Creators ---
+    private void createLogsPanel() {
+        // Logs go below the bottom row
+        JPanel logContainer = new JPanel(new BorderLayout());
+        logContainer.setOpaque(false);
+        logContainer.setBounds(0, 870, 2000, 150);
+
+        logsArea = new JTextArea();
+        logsArea.setEditable(false);
+        logsArea.setBackground(new Color(30, 30, 40));
+        logsArea.setForeground(Color.WHITE);
+        logsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+        JLabel logTitle = new JLabel(" Operation Logs");
+        logTitle.setForeground(Color.WHITE);
+        logTitle.setOpaque(true);
+        logTitle.setBackground(new Color(50, 50, 60));
+
+        logsScrollPane = new JScrollPane(logsArea);
+        logsScrollPane.setBorder(null);
+
+        logContainer.add(logTitle, BorderLayout.NORTH);
+        logContainer.add(logsScrollPane, BorderLayout.CENTER);
+
+        mainLayer.add(logContainer);
+    }
 
     private JPanel createAddDebtPanel() {
         RoundedPanel panel = new RoundedPanel(25, Color.WHITE);
@@ -318,7 +371,7 @@ public class UserDashboard extends JFrame {
 
         intValLabel = new JLabel("0.0%");
         intValLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
-        intValLabel.setForeground(new Color(234, 88, 12)); // Orange text
+        intValLabel.setForeground(new Color(234, 88, 12));
         intValLabel.setBounds(250, 115, 150, 35);
         panel.add(intValLabel);
 
@@ -346,64 +399,6 @@ public class UserDashboard extends JFrame {
         return panel;
     }
 
-    private void updateCreditCardPanel() {
-        try {
-            List<Debt> activeDebts = manager.getStackForVisualization();
-            if (activeDebts != null && !activeDebts.isEmpty()) {
-                // The first element in the list is the TOS (top of stack)
-                Debt topDebt = activeDebts.get(0);
-
-                // Update card title
-                cardTitleLabel.setText(topDebt.getName());
-
-                // Update position (always 1 for TOS)
-                posLabel.setText("Position: 1 (TOS)");
-
-                // Update current balance
-                balValLabel.setText(String.format("$%,.2f", topDebt.getCurrentBalance()));
-
-                // Update interest rate - FIXED: Handle any type of interest rate
-                try {
-                    // Get interest rate as a number
-                    Object rateObj = topDebt.getInterestRate();
-                    if (rateObj instanceof Number) {
-                        double interestRate = ((Number) rateObj).doubleValue();
-                        intValLabel.setText(String.format("%.1f%%", interestRate));
-                    } else {
-                        // If it's not a number, just convert to string
-                        intValLabel.setText(rateObj.toString() + "%");
-                    }
-                } catch (Exception e) {
-                    // If there's any error, just show it as-is
-                    intValLabel.setText("Error");
-                }
-
-                // Update original amount
-                ogAmtLabel.setText(String.format("Original Amount: $%,.2f", topDebt.getOriginalAmount()));
-
-                // Update minimum payment
-                minPayLabel.setText(String.format("Min Payment: $%,.2f", topDebt.getMinimumPayment()));
-
-                // Update progress bar (percentage paid)
-                double progress = ((topDebt.getOriginalAmount() - topDebt.getCurrentBalance())
-                        / topDebt.getOriginalAmount()) * 100;
-                progressBar.setValue((int) Math.min(100, Math.max(0, progress)));
-            } else {
-                // No active debts - show defaults
-                cardTitleLabel.setText("No Active Debt");
-                posLabel.setText("Position: N/A");
-                balValLabel.setText("$0.00");
-                intValLabel.setText("0.0%");
-                ogAmtLabel.setText("Original Amount: $0.00");
-                minPayLabel.setText("Min Payment: $0.00");
-                progressBar.setValue(0);
-            }
-        } catch (Exception e) {
-            // Ignore any errors in updating the credit card panel
-            // The application should continue working even if this panel fails
-        }
-    }
-
     private JPanel createEventCalendarPanel() {
         RoundedPanel panel = new RoundedPanel(25, Color.WHITE);
         panel.setLayout(null);
@@ -413,14 +408,13 @@ public class UserDashboard extends JFrame {
         title.setBounds(20, 20, 200, 30);
         panel.add(title);
 
-        // Use a text area for the list of events to keep it simple
         calendarEventsArea = new JTextArea();
         calendarEventsArea.setText("");
         calendarEventsArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
         calendarEventsArea.setEditable(false);
         calendarEventsArea.setLineWrap(true);
         calendarEventsArea.setWrapStyleWord(true);
-        calendarEventsArea.setOpaque(false); // See through to panel
+        calendarEventsArea.setOpaque(false);
 
         JScrollPane scrollPane = new JScrollPane(calendarEventsArea);
         scrollPane.setBounds(20, 60, 310, 200);
@@ -432,45 +426,54 @@ public class UserDashboard extends JFrame {
         return panel;
     }
 
+    private void updateCreditCardPanel() {
+        try {
+            List<Debt> activeDebts = manager.getStackForVisualization();
+            if (activeDebts != null && !activeDebts.isEmpty()) {
+                Debt topDebt = activeDebts.get(0);
+
+                cardTitleLabel.setText(topDebt.getName());
+                posLabel.setText("Position: 1 (TOS)");
+                balValLabel.setText(String.format("$%,.2f", topDebt.getCurrentBalance()));
+
+                try {
+                    Object rateObj = topDebt.getInterestRate();
+                    if (rateObj instanceof Number) {
+                        double interestRate = ((Number) rateObj).doubleValue();
+                        intValLabel.setText(String.format("%.1f%%", interestRate));
+                    } else {
+                        intValLabel.setText(rateObj.toString() + "%");
+                    }
+                } catch (Exception e) {
+                    intValLabel.setText("Error");
+                }
+
+                ogAmtLabel.setText(String.format("Original Amount: $%,.2f", topDebt.getOriginalAmount()));
+                minPayLabel.setText(String.format("Min Payment: $%,.2f", topDebt.getMinimumPayment()));
+
+                double progress = ((topDebt.getOriginalAmount() - topDebt.getCurrentBalance())
+                        / topDebt.getOriginalAmount()) * 100;
+                progressBar.setValue((int) Math.min(100, Math.max(0, progress)));
+            } else {
+                cardTitleLabel.setText("No Active Debt");
+                posLabel.setText("Position: N/A");
+                balValLabel.setText("$0.00");
+                intValLabel.setText("0.0%");
+                ogAmtLabel.setText("Original Amount: $0.00");
+                minPayLabel.setText("Min Payment: $0.00");
+                progressBar.setValue(0);
+            }
+        } catch (Exception e) {
+            // Ignore errors
+        }
+    }
+
     private void addEventToCalendar(String event) {
-        // Get current date
         Date now = new Date();
         String dateStr = dateFormat.format(now);
-
-        // Add the event with timestamp
         calendarEventsArea.append(dateStr + ": " + event + "\n");
-
-        // Scroll to bottom
         calendarEventsArea.setCaretPosition(calendarEventsArea.getDocument().getLength());
     }
-
-    private void createLogsPanel() {
-        // Logs go below the bottom row
-        JPanel logContainer = new JPanel(new BorderLayout());
-        logContainer.setOpaque(false);
-        logContainer.setBounds(0, 870, 2000, 150);
-
-        logsArea = new JTextArea();
-        logsArea.setEditable(false);
-        logsArea.setBackground(new Color(30, 30, 40));
-        logsArea.setForeground(Color.WHITE);
-        logsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-
-        JLabel logTitle = new JLabel(" Operation Logs");
-        logTitle.setForeground(Color.WHITE);
-        logTitle.setOpaque(true);
-        logTitle.setBackground(new Color(50, 50, 60));
-
-        logsScrollPane = new JScrollPane(logsArea);
-        logsScrollPane.setBorder(null);
-
-        logContainer.add(logTitle, BorderLayout.NORTH);
-        logContainer.add(logsScrollPane, BorderLayout.CENTER);
-
-        mainLayer.add(logContainer);
-    }
-
-    // --- Helper Methods for Styling ---
 
     private void addLabel(JPanel p, String text, int x, int y) {
         JLabel l = new JLabel(text);
@@ -492,7 +495,7 @@ public class UserDashboard extends JFrame {
 
     private JButton createOrangeButton(String text) {
         JButton btn = new JButton(text);
-        btn.setBackground(new Color(234, 88, 12)); // The exact orange from the image
+        btn.setBackground(new Color(234, 88, 12));
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
@@ -508,150 +511,6 @@ public class UserDashboard extends JFrame {
         btn.setFont(new Font("SansSerif", Font.BOLD, 12));
     }
 
-    private JButton createIconButton(String text, String tooltip, ActionListener action) {
-        // White square button with text
-        JButton button = new JButton(text);
-        button.setToolTipText(tooltip);
-        button.setBackground(Color.WHITE);
-        button.setForeground(Color.BLACK);
-        button.setFont(new Font("SansSerif", Font.BOLD, 9));
-        // Make it look like a rounded icon box
-        button.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        button.setFocusPainted(false);
-        button.addActionListener(action);
-        return button;
-    }
-
-    // --- Custom Panels ---
-
-    /**
-     * A simple helper class to draw a white panel with rounded corners
-     */
-    class RoundedPanel extends JPanel {
-        private int radius;
-        private Color bgColor;
-
-        public RoundedPanel(int radius, Color bgColor) {
-            this.radius = radius;
-            this.bgColor = bgColor;
-            setOpaque(false); // Important for round corners
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(bgColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-        }
-    }
-
-    /**
-     * The Tower Visualization
-     */
-    private class TowerVisualizationPanel extends JPanel {
-        public TowerVisualizationPanel() {
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            int w = getWidth();
-            int h = getHeight();
-
-            // Title
-            g2.setColor(Color.BLACK);
-            g2.setFont(new Font("SansSerif", Font.BOLD, 24));
-            String title = "THE HANOI DEBT TOWER";
-            FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(title, (w - fm.stringWidth(title)) / 2, 40);
-
-            // Draw Base Line (purple gradient in image, we'll do solid purple)
-            int baseY = h - 50;
-            g2.setColor(new Color(100, 40, 100)); // Dark purple
-            g2.fillRoundRect(50, baseY, w - 100, 15, 10, 10);
-
-            // Columns
-            String[] labels = { "ACTIVE DEBT", "AUXILIARY", "PAID-OFF" };
-            int colW = w / 3;
-
-            // Draw Pillars (vertical lines)
-            g2.setColor(new Color(120, 40, 120)); // Purple pillar color
-            for (int i = 0; i < 3; i++) {
-                int cx = colW * i + colW / 2;
-                // Draw the vertical stick
-                g2.fillRoundRect(cx - 5, 80, 10, baseY - 80, 10, 10);
-
-                // Draw Label
-                g2.setColor(Color.BLACK);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 14));
-                String lbl = labels[i];
-                g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2 + 30, baseY + 40);
-                g2.setColor(new Color(120, 40, 120)); // Reset for next pillar
-            }
-
-            // Draw Debts
-            drawStack(g2, manager.getStackForVisualization(), colW / 2, baseY);
-            drawStack(g2, auxiliaryDebts, colW + colW / 2, baseY);
-            drawStack(g2, paidOffDebts, colW * 2 + colW / 2, baseY);
-        }
-
-        private void drawStack(Graphics2D g2, List<Debt> debts, int centerX, int baseY) {
-            if (debts == null || debts.isEmpty())
-                return;
-
-            int brickH = 40;
-            int gap = 5;
-            int currentY = baseY - gap - brickH;
-
-            // Draw stack properly: TOS (first element) at the top, newer items on top
-            // In a stack, index 0 is the TOS, so we draw them in order from top to bottom
-
-            int totalDebts = Math.min(debts.size(), 6); // Limit to 6 for visualization
-
-            for (int i = 0; i < totalDebts; i++) {
-                Debt d = debts.get(i);
-
-                // Calculate Y position: TOS at the top (lowest Y), older debts below
-                int yPos = baseY - gap - brickH - (i * (brickH + gap));
-
-                // Color logic based on position in stack
-                Color c;
-                if (i == 0)
-                    c = new Color(50, 200, 50); // Green (Top/Active - TOS)
-                else if (i == 1)
-                    c = new Color(255, 200, 50); // Yellow (Second in stack)
-                else
-                    c = new Color(220, 100, 50); // Orange/Red (Lower in stack)
-
-                // If paid off column - use gray
-                if (centerX > getWidth() / 2 + 100)
-                    c = new Color(100, 100, 100);
-
-                g2.setColor(c);
-
-                // Make debts wider as they go down (pyramid style)
-                // Bottom debts (higher index) should be wider
-                int width = 250 + ((totalDebts - i - 1) * 20);
-
-                // Draw the debt "brick"
-                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 15, 15);
-
-                // Add debt info text
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 11));
-                String info = d.getName() + " $" + (int) d.getCurrentBalance();
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(info, centerX - fm.stringWidth(info) / 2, yPos + 25);
-            }
-        }
-    }
-
     // --- Action Methods ---
 
     private void pushNewDebt() {
@@ -662,13 +521,11 @@ public class UserDashboard extends JFrame {
             String minText = minField.getText().trim();
             String dueDate = dueDateField.getText().trim();
 
-            // Simple validation
             if (name.isEmpty() || amountText.isEmpty() || intText.isEmpty() || minText.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill in all fields");
                 return;
             }
 
-            // Parse values with simple error handling
             double amt, ir, min;
             try {
                 amt = Double.parseDouble(amountText);
@@ -680,7 +537,6 @@ public class UserDashboard extends JFrame {
                 return;
             }
 
-            // Validate minimum values
             if (amt <= 0) {
                 JOptionPane.showMessageDialog(this, "Amount must be greater than 0");
                 return;
@@ -696,23 +552,17 @@ public class UserDashboard extends JFrame {
                 return;
             }
 
-            // Create and add the debt
             Debt newDebt = new Debt(name, amt, ir, min);
             controller.getManager().pushDebt(newDebt);
 
-            // Debug: Print stack order
-            printStackOrder();
-
             log("PUSH: Added " + name + " ($" + String.format("%.2f", amt) + ")");
 
-            // Add to event calendar if due date is provided
             if (!dueDate.isEmpty()) {
                 addEventToCalendar("Due for " + name + " on " + dueDate + " - Payment: $" + String.format("%.2f", min));
             } else {
                 addEventToCalendar("Added new debt: " + name + " ($" + String.format("%.2f", amt) + ")");
             }
 
-            // Clear fields
             nameField.setText("");
             amountField.setText("");
             intField.setText("");
@@ -750,7 +600,6 @@ public class UserDashboard extends JFrame {
                     return;
                 }
 
-                // Check if payment exceeds balance
                 if (amt > top.getCurrentBalance()) {
                     int option = JOptionPane.showConfirmDialog(this,
                             "Payment amount ($" + String.format("%.2f", amt) +
@@ -769,19 +618,13 @@ public class UserDashboard extends JFrame {
                 top.makePayment(amt);
                 log("PAID: $" + String.format("%.2f", amt) + " to " + top.getName());
 
-                // Check if debt is paid off
                 if (top.isPaidOff()) {
-                    // Move to paid-off debts
                     Debt paidOffDebt = controller.getManager().popDebt();
-                    paidOffDebts.add(0, paidOffDebt); // Add to beginning (top of paid-off stack)
+                    paidOffDebts.add(0, paidOffDebt);
                     log("COMPLETED: " + top.getName() + " is now paid off!");
-
-                    // Add to event calendar
                     addEventToCalendar(top.getName() + " has been successfully paid off!");
 
-                    // Check if there's a new TOS and move it from auxiliary if needed
                     if (controller.getManager().peekTOS() == null && !auxiliaryDebts.isEmpty()) {
-                        // Move the top debt from auxiliary back to active (LIFO)
                         Debt newActive = auxiliaryDebts.remove(0);
                         controller.getManager().pushDebt(newActive);
                         log("MOVED: " + newActive.getName() + " from auxiliary to active (LIFO)");
@@ -805,13 +648,8 @@ public class UserDashboard extends JFrame {
     }
 
     private void refreshAll() {
-        // Update TOS label in payment panel
         tosLabel.setText("Current TOS: " + getTopName());
-
-        // Update credit card panel
         updateCreditCardPanel();
-
-        // Repaint everything
         towerContainer.repaint();
         mainLayer.revalidate();
         mainLayer.repaint();
@@ -822,26 +660,7 @@ public class UserDashboard extends JFrame {
         return d != null ? d.getName() : "None";
     }
 
-    // Helper method to debug stack order
-    private void printStackOrder() {
-        System.out.println("=== Current Stack Order (TOS First) ===");
-        List<Debt> debts = manager.getStackForVisualization();
-        if (debts != null) {
-            for (int i = 0; i < debts.size(); i++) {
-                System.out.println((i + 1) + ". " + debts.get(i).getName() +
-                        " - Balance: $" + String.format("%.2f", debts.get(i).getCurrentBalance()));
-            }
-        } else {
-            System.out.println("No active debts");
-        }
-        System.out.println("=========================");
-    }
-
     // Placeholder actions for sidebar buttons
-    private void onAddClicked() {
-        JOptionPane.showMessageDialog(this, "Use panel on right");
-    }
-
     private void onPeekClicked() {
         Debt d = controller.getManager().peekTOS();
         if (d != null) {
@@ -869,12 +688,8 @@ public class UserDashboard extends JFrame {
                     JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // Move TOS to auxiliary - pop from main stack
                 Debt movedDebt = controller.getManager().popDebt();
-
-                // Add to beginning of auxiliary list (top of auxiliary stack)
                 auxiliaryDebts.add(0, movedDebt);
-
                 log("MOVED: " + movedDebt.getName() + " from active to auxiliary (LIFO)");
                 refreshAll();
             }
@@ -916,7 +731,6 @@ public class UserDashboard extends JFrame {
     }
 
     private void onProfileClicked() {
-        // Show user profile information
         List<Debt> activeDebtsList = manager.getStackForVisualization();
         int activeDebts = activeDebtsList != null ? activeDebtsList.size() : 0;
         double totalBalance = 0;
@@ -929,6 +743,13 @@ public class UserDashboard extends JFrame {
 
         JOptionPane.showMessageDialog(this,
                 "User Profile:\n" +
+                        "Username: " + controller.getCurrentUsername() + "\n" +
+                        "Name: "
+                        + (controller.getCurrentUser() != null ? controller.getCurrentUser().getFullName() : "N/A")
+                        + "\n" +
+                        "Email: "
+                        + (controller.getCurrentUser() != null ? controller.getCurrentUser().getEmail() : "N/A") + "\n"
+                        +
                         "Active Debts: " + activeDebts + "\n" +
                         "Total Active Balance: $" + String.format("%.2f", totalBalance) + "\n" +
                         "Auxiliary Debts: " + auxiliaryDebts.size() + "\n" +
@@ -938,83 +759,231 @@ public class UserDashboard extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private static void showConsultationDialog(Component parentComponent) {
-        // --- 1. Create the Panel that will hold all the form fields ---
+    // Update the consultation dialog method in UserDashboard.java
+    private void showConsultationDialog(Component parentComponent) {
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 5, 10));
 
-        // We use a GridLayout with 4 rows and 2 columns for a clean label/field pair
-        // layout.
-        // The numbers (5, 5) are for the vertical and horizontal space between
-        // components.
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 10));
-
-        // --- 2. Create the components for the form fields ---
-
-        // Label and field for "Reason for Consultation:"
         JLabel reasonLabel = new JLabel("Reason for Consultation:");
-        JTextField reasonField = new JTextField(20); // 20 is the preferred width
+        JTextField reasonField = new JTextField(20);
 
-        // Label and field for "Choose available Financial Advisor:"
-        JLabel advisorLabel = new JLabel("Choose available Financial Advisor:");
-        JTextField advisorField = new JTextField(20); // Could be a JComboBox in a real app
+        JLabel advisorLabel = new JLabel("Choose Financial Advisor:");
 
-        // Label and field for "Platform to use:"
+        // Get all financial advisors
+        List<User> advisors = DataManager.getFinancialAdvisors();
+        String[] advisorOptions;
+
+        if (advisors.isEmpty()) {
+            advisorOptions = new String[] { "No advisors available" };
+        } else {
+            advisorOptions = new String[advisors.size()];
+            for (int i = 0; i < advisors.size(); i++) {
+                advisorOptions[i] = advisors.get(i).getFullName() + " (" + advisors.get(i).getUsername() + ")";
+            }
+        }
+
+        JComboBox<String> advisorComboBox = new JComboBox<>(advisorOptions);
+        advisorComboBox.setEnabled(!advisors.isEmpty());
+
         JLabel platformLabel = new JLabel("Platform to use:");
-        JTextField platformField = new JTextField(20); // Could be a JComboBox in a real app
+        String[] platforms = { "Zoom", "Google Meet", "Microsoft Teams", "Phone Call", "In Person" };
+        JComboBox<String> platformComboBox = new JComboBox<>(platforms);
 
-        // Label and field for "Date for Consultation:"
-        JLabel dateLabel = new JLabel("Date for Consultation:");
+        JLabel dateLabel = new JLabel("Preferred Date (YYYY-MM-DD):");
         JTextField dateField = new JTextField(20);
+        dateField.setText(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 
-        // --- 3. Add the components to the form panel ---
-        // Add them in pairs: Label then Text Field
         formPanel.add(reasonLabel);
         formPanel.add(reasonField);
 
         formPanel.add(advisorLabel);
-        formPanel.add(advisorField);
+        formPanel.add(advisorComboBox);
 
         formPanel.add(platformLabel);
-        formPanel.add(platformField);
+        formPanel.add(platformComboBox);
 
         formPanel.add(dateLabel);
         formPanel.add(dateField);
 
-        // --- 4. Show the custom panel inside a JOptionPane ---
-
-        // The first argument is the parent frame (where the dialog pops up).
-        // The second argument is the custom component (our formPanel) to display.
-        // The third argument is the Title of the dialog.
-        // The fourth argument is the type of message (PLAIN_MESSAGE removes the icon).
         int result = JOptionPane.showConfirmDialog(
-                parentComponent, // Parent component
-                formPanel, // The custom panel containing the form fields
-                "Consultation Appointment", // Title of the dialog box
-                JOptionPane.OK_CANCEL_OPTION, // Show OK and Cancel buttons
-                JOptionPane.PLAIN_MESSAGE // No icon
-        );
+                parentComponent,
+                formPanel,
+                "Consultation Appointment",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
 
-        // --- 5. Handle the result (what the user clicked) ---
         if (result == JOptionPane.OK_OPTION) {
-            // The user clicked "OK" (or "Request Consultation" in your picture's style)
-            // You can now get the text the user typed:
-            String reason = reasonField.getText();
-            String advisor = advisorField.getText();
-            String platform = platformField.getText();
-            String date = dateField.getText();
+            String reason = reasonField.getText().trim();
+            String advisorSelection = (String) advisorComboBox.getSelectedItem();
+            String platform = (String) platformComboBox.getSelectedItem();
+            String date = dateField.getText().trim();
 
-            // Here you would put the code to save or process this information
-            System.out.println("--- Consultation Requested ---");
+            // Validate inputs
+            if (reason.isEmpty()) {
+                JOptionPane.showMessageDialog(parentComponent,
+                        "Please enter a reason for consultation.",
+                        "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (advisors.isEmpty()) {
+                JOptionPane.showMessageDialog(parentComponent,
+                        "No financial advisors are currently available. Please try again later.",
+                        "No Advisors", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Validate date format (simple check)
+            if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                JOptionPane.showMessageDialog(parentComponent,
+                        "Please enter date in YYYY-MM-DD format.",
+                        "Date Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Parse advisor information
+            String advisorUsername = advisorSelection.substring(advisorSelection.lastIndexOf('(') + 1,
+                    advisorSelection.lastIndexOf(')'));
+
+            // Create consultation request
+            ConsultationRequest request = new ConsultationRequest(
+                    controller.getCurrentUsername(),
+                    controller.getCurrentUser().getFullName(),
+                    reason,
+                    date + " " + platform);
+
+            // Save the request
+            DataManager.addConsultationRequest(request);
+
+            System.out.println("--- Consultation Request Submitted ---");
+            System.out.println("Client: " + controller.getCurrentUser().getFullName());
             System.out.println("Reason: " + reason);
-            System.out.println("Advisor: " + advisor);
+            System.out.println("Advisor: " + advisorSelection);
             System.out.println("Platform: " + platform);
             System.out.println("Date: " + date);
+
+            log("Consultation request submitted to " + advisorSelection);
+
+            JOptionPane.showMessageDialog(parentComponent,
+                    "Consultation request submitted successfully!\n" +
+                            "Your request has been sent to the financial advisor.\n" +
+                            "You will be contacted for confirmation.",
+                    "Request Submitted",
+                    JOptionPane.INFORMATION_MESSAGE);
         } else {
-            // The user clicked "Cancel" or closed the dialog
             System.out.println("Consultation request cancelled.");
         }
     }
 
+    // --- Custom Panels ---
+
+    class RoundedPanel extends JPanel {
+        private int radius;
+        private Color bgColor;
+
+        public RoundedPanel(int radius, Color bgColor) {
+            this.radius = radius;
+            this.bgColor = bgColor;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(bgColor);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
+        }
+    }
+
+    private class TowerVisualizationPanel extends JPanel {
+        public TowerVisualizationPanel() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int w = getWidth();
+            int h = getHeight();
+
+            g2.setColor(Color.BLACK);
+            g2.setFont(new Font("SansSerif", Font.BOLD, 24));
+            String title = "THE HANOI DEBT TOWER";
+            FontMetrics fm = g2.getFontMetrics();
+            g2.drawString(title, (w - fm.stringWidth(title)) / 2, 40);
+
+            int baseY = h - 50;
+            g2.setColor(new Color(100, 40, 100));
+            g2.fillRoundRect(50, baseY, w - 100, 15, 10, 10);
+
+            String[] labels = { "ACTIVE DEBT", "AUXILIARY", "PAID-OFF" };
+            int colW = w / 3;
+
+            g2.setColor(new Color(120, 40, 120));
+            for (int i = 0; i < 3; i++) {
+                int cx = colW * i + colW / 2;
+                g2.fillRoundRect(cx - 5, 80, 10, baseY - 80, 10, 10);
+
+                g2.setColor(Color.BLACK);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 14));
+                String lbl = labels[i];
+                g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2 + 30, baseY + 40);
+                g2.setColor(new Color(120, 40, 120));
+            }
+
+            drawStack(g2, manager.getStackForVisualization(), colW / 2, baseY);
+            drawStack(g2, auxiliaryDebts, colW + colW / 2, baseY);
+            drawStack(g2, paidOffDebts, colW * 2 + colW / 2, baseY);
+        }
+
+        private void drawStack(Graphics2D g2, List<Debt> debts, int centerX, int baseY) {
+            if (debts == null || debts.isEmpty())
+                return;
+
+            int brickH = 40;
+            int gap = 5;
+            int currentY = baseY - gap - brickH;
+
+            int totalDebts = Math.min(debts.size(), 6);
+
+            for (int i = 0; i < totalDebts; i++) {
+                Debt d = debts.get(i);
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+
+                Color c;
+                if (i == 0)
+                    c = new Color(50, 200, 50);
+                else if (i == 1)
+                    c = new Color(255, 200, 50);
+                else
+                    c = new Color(220, 100, 50);
+
+                if (centerX > getWidth() / 2 + 100)
+                    c = new Color(100, 100, 100);
+
+                g2.setColor(c);
+
+                int width = 250 + ((totalDebts - i - 1) * 20);
+
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 15, 15);
+
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 11));
+                String info = d.getName() + " $" + (int) d.getCurrentBalance();
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(info, centerX - fm.stringWidth(info) / 2, yPos + 25);
+            }
+        }
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new UserDashboard(controller));
+        SwingUtilities.invokeLater(() -> {
+            AppController controller = new AppController();
+            new UserDashboard(controller).setVisible(true);
+        });
     }
 }

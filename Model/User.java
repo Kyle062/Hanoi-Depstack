@@ -43,4 +43,14 @@ public class User implements Serializable {
     public User(String fullName, String email, String username, String password) {
         this(fullName, email, username, password, "DEBTOR"); // Default to debtor
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", username='" + username + '\'' +
+                ", userType='" + userType + '\'' +
+                '}';
+    }
 }

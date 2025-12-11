@@ -20,8 +20,8 @@ public class UserRegister extends JFrame {
     private JRadioButton debtorRadio;
     private JRadioButton advisorRadio;
 
-    public UserRegister() {
-        this.controller = new AppController();
+    public UserRegister(AppController controller) {
+        this.controller = controller;
         setTitle("HANOI DEBTSTACK User Registration");
         setSize(FRAME_WIDTH, FRAME_HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -217,85 +217,25 @@ public class UserRegister extends JFrame {
                     usernameField.setText("");
                     passwordField.setText("");
 
-                    // Go to login page (NOT dashboard directly)
+                    // Go to login page
                     dispose();
                     new Login(controller).setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(UserRegister.this,
+                            "Registration failed. Username may already exist.",
+                            "Registration Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
-    }
 
-    private void openDashboard(String userType) {
-        SwingUtilities.invokeLater(() -> {
-            if (userType.equals("DEBTOR")) {
-                // For debtor, open the UserDashboard directly
-                try {
-                    // Close registration window
-                    dispose();
-
-                    // Open the UserDashboard directly (since user is already logged in via
-                    // registration)
-                    UserDashboard dashboard = new UserDashboard(controller);
-                    dashboard.setVisible(true);
-
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Error opening dashboard: " + ex.getMessage(),
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                    // Fallback: Open login
-                    new Login(controller).setVisible(true);
-                }
-            } else if (userType.equals("ADVISOR")) {
-                // For advisor, also open UserDashboard (or create a separate dashboard)
-                try {
-                    dispose();
-                    UserDashboard dashboard = new UserDashboard(controller);
-                    dashboard.setVisible(true);
-
-                    JOptionPane.showMessageDialog(null,
-                            "Logged in as Financial Advisor",
-                            "Success", JOptionPane.INFORMATION_MESSAGE);
-
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Error opening dashboard: " + ex.getMessage(),
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                    new Login(controller).setVisible(true);
-                }
+        // Add login link functionality
+        loginLink.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                new Login(controller).setVisible(true);
+                dispose();
             }
         });
-    }
-
-    public void exportPhoto(String filename) {
-        try {
-            // Get the content pane's size
-            Rectangle rect = this.getBounds();
-            // Create a BufferedImage to capture the frame content
-            BufferedImage image = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-            Graphics g = image.getGraphics();
-            this.paint(g); // Paint the entire frame onto the buffered image
-
-            // Write the image to a file
-            File outputFile = new File(filename + ".png");
-            ImageIO.write(image, "png", outputFile);
-            System.out.println("Screenshot exported successfully to: " + outputFile.getAbsolutePath());
-
-            // Optional: Show success message (using a custom dialog instead of alert)
-            JOptionPane.showMessageDialog(this, "The UI screenshot was saved as " + outputFile.getName(),
-                    "Export Success", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error exporting screenshot: " + ex.getMessage(), "Export Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // You might also want to add this method to handle window closing
-    @Override
-    public void dispose() {
-        // Clean up resources if needed
-        super.dispose();
     }
 
     public static void main(String[] args) {
@@ -306,6 +246,9 @@ public class UserRegister extends JFrame {
             e.printStackTrace();
         }
 
-        SwingUtilities.invokeLater(() -> new UserRegister().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            AppController controller = new AppController();
+            new UserRegister(controller).setVisible(true);
+        });
     }
 }

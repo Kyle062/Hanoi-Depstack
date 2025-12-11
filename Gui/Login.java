@@ -3,6 +3,7 @@ package Gui;
 import javax.swing.*;
 import Model.AppController;
 import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class Login extends JFrame {
         SignupLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                new UserRegister().setVisible(true);
+                new UserRegister(controller).setVisible(true);
                 dispose();
             }
         });
@@ -135,80 +136,75 @@ public class Login extends JFrame {
         signUp.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                new UserRegister().setVisible(true);
+                new UserRegister(controller).setVisible(true);
                 dispose();
             }
         });
 
-        // SIMPLIFIED ACTION - DIRECTLY OPENS MAIN DASHBOARD
+        // LOGIN ACTION - Redirects to correct dashboard based on user type
         loginButton.addActionListener(e -> {
             String u = userIdField.getText().trim();
             String p = new String(passwordField.getPassword()).trim();
-            
+
             // Check if fields are empty
             if (u.isEmpty() || p.isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "Please enter both username and password.", 
-                    "Login Error", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Please enter both username and password.",
+                        "Login Error", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             // Attempt login
             if (controller.login(u, p)) {
-                // SUCCESSFUL LOGIN - DIRECTLY OPEN MAIN DASHBOARD
+                // SUCCESSFUL LOGIN - Redirect to appropriate dashboard
                 dispose(); // Close login window
-                
-                // Open main dashboard - assuming you have DebtStackUserDashboard
+
                 SwingUtilities.invokeLater(() -> {
                     try {
-                        // Create and show the main dashboard
-                        UserDashboard mainDashboard = new UserDashboard(controller);
-                        mainDashboard.setVisible(true);
+                        String userType = controller.getCurrentUserType();
+
+                        if ("ADVISOR".equals(userType)) {
+                            // Open Financial Advisor Dashboard
+                            FADashboard faDashboard = new FADashboard(controller);
+                            faDashboard.setVisible(true);
+                        } else if ("DEBTOR".equals(userType)) {
+                            // Open User Dashboard (Client)
+                            UserDashboard userDashboard = new UserDashboard(controller);
+                            userDashboard.setVisible(true);
+                        } else {
+                            // Default to user dashboard
+                            JOptionPane.showMessageDialog(null,
+                                    "Unknown user type. Redirecting to default dashboard.",
+                                    "Info", JOptionPane.INFORMATION_MESSAGE);
+                            UserDashboard userDashboard = new UserDashboard(controller);
+                            userDashboard.setVisible(true);
+                        }
+
                     } catch (Exception ex) {
                         // If error occurs, show message and reopen login
-                        JOptionPane.showMessageDialog(null, 
-                            "Error opening dashboard: " + ex.getMessage() + 
-                            "\nPlease try logging in again.", 
-                            "Dashboard Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(null,
+                                "Error opening dashboard: " + ex.getMessage() +
+                                        "\nPlease try logging in again.",
+                                "Dashboard Error", JOptionPane.ERROR_MESSAGE);
                         new Login(controller).setVisible(true);
                     }
                 });
             } else {
                 // FAILED LOGIN
-                JOptionPane.showMessageDialog(this, 
-                    "Invalid username or password. Please try again.", 
-                    "Login Failed", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Invalid username or password. Please try again.",
+                        "Login Failed", JOptionPane.ERROR_MESSAGE);
                 passwordField.setText(""); // Clear password field
             }
         });
-        
+
         // Add Enter key support for password field
         passwordField.addActionListener(e -> loginButton.doClick());
-    }
 
-    public void exportPhoto(String filename) {
-        try {
-            // Get the content pane's size
-            Rectangle rect = this.getBounds();
-            // Create a BufferedImage to capture the frame content
-            BufferedImage image = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-            Graphics g = image.getGraphics();
-            this.paint(g); // Paint the entire frame onto the buffered image
-
-            // Write the image to a file
-            File outputFile = new File(filename + ".png");
-            ImageIO.write(image, "png", outputFile);
-            System.out.println("Screenshot exported successfully to: " + outputFile.getAbsolutePath());
-
-            // Optional: Show success message (using a custom dialog instead of alert)
-            JOptionPane.showMessageDialog(this, "The UI screenshot was saved as " + outputFile.getName(),
-                    "Export Success", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error exporting screenshot: " + ex.getMessage(), "Export Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+        // Add keyboard shortcut for login (Ctrl+Enter)
+        getRootPane().registerKeyboardAction(e -> loginButton.doClick(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
     public static void main(String[] args) {
@@ -218,7 +214,7 @@ public class Login extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         // Start the application
         SwingUtilities.invokeLater(() -> {
             AppController controller = new AppController();

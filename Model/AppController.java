@@ -14,11 +14,33 @@ public class AppController {
         // Load existing users from file
         users = DataManager.loadUsers();
 
-        // Pre-register admin if not exists
+        // Pre-register admin advisor if not exists
         if (!users.containsKey("admin")) {
-            users.put("admin", new User("Admin User", "admin@test.com", "admin", "password", "ADVISOR"));
+            users.put("admin", new User("Admin Advisor", "admin@hanoi.com", "admin", "password123", "ADVISOR"));
             DataManager.saveUsers(users);
-            System.out.println("Admin user created.");
+            System.out.println("Admin advisor created.");
+        }
+
+        // Pre-register a test financial advisor if not exists
+        if (!users.containsKey("advisor1")) {
+            users.put("advisor1", new User("John Financial", "john@hanoi.com", "advisor1", "password123", "ADVISOR"));
+            DataManager.saveUsers(users);
+            System.out.println("Test financial advisor created.");
+        }
+
+        // Pre-register another financial advisor
+        if (!users.containsKey("advisor2")) {
+            users.put("advisor2",
+                    new User("Sarah Consultant", "sarah@hanoi.com", "advisor2", "password123", "ADVISOR"));
+            DataManager.saveUsers(users);
+            System.out.println("Second financial advisor created.");
+        }
+
+        // Pre-register a test client if not exists
+        if (!users.containsKey("client")) {
+            users.put("client", new User("Test Client", "client@test.com", "client", "password123", "DEBTOR"));
+            DataManager.saveUsers(users);
+            System.out.println("Test client created.");
         }
 
         System.out.println("Loaded " + users.size() + " users from storage.");
@@ -31,7 +53,7 @@ public class AppController {
 
             // Load user's debts from storage
             loadUserDebts(username);
-            System.out.println("User '" + username + "' logged in successfully.");
+            System.out.println("User '" + username + "' logged in successfully as " + currentUser.getUserType());
             return true;
         }
         System.out.println("Login failed for user: " + username);
@@ -121,6 +143,16 @@ public class AppController {
 
     public String getCurrentUsername() {
         return currentUsername;
+    }
+
+    // Check if current user is advisor
+    public boolean isAdvisor() {
+        return currentUser != null && "ADVISOR".equals(currentUser.getUserType());
+    }
+
+    // Check if current user is debtor
+    public boolean isDebtor() {
+        return currentUser != null && "DEBTOR".equals(currentUser.getUserType());
     }
 
     // Method to manually save data (can be called periodically)
