@@ -28,9 +28,9 @@ public class FADashboard extends JFrame {
 
     // Panels
     private JPanel towerContainer;
-    private JPanel reportsPanel; 
-    private JPanel reportCreationPanel; 
-    private JPanel appointmentSchedulePanel; 
+    private JPanel reportsPanel;
+    private JPanel reportCreationPanel;
+    private JPanel appointmentSchedulePanel;
     private JPanel logsPanel;
 
     // Controls
@@ -41,7 +41,7 @@ public class FADashboard extends JFrame {
     // Data lists
     private List<Debt> auxiliaryDebts = new ArrayList<>();
     private List<Debt> paidOffDebts = new ArrayList<>();
-    
+
     // Colors
     private final Color ORANGE_ACCENT = new Color(241, 122, 80);
     private final Color BLUE_ACCENT = new Color(133, 196, 230);
@@ -53,11 +53,17 @@ public class FADashboard extends JFrame {
     private final Color RED_REPORT = new Color(255, 100, 50);
     private final Color DARK_ORANGE_REPORT = new Color(220, 100, 50);
 
+    // Sidebar button states
+    private SidebarButton currentActiveButton = null;
+    private final Color SIDEBAR_INACTIVE_COLOR = Color.WHITE;
+    private final Color SIDEBAR_ACTIVE_COLOR = new Color(241, 122, 80); // ORANGE_ACCENT
+    private final Color SIDEBAR_HOVER_COLOR = new Color(255, 140, 100);
+
     public FADashboard(AppController controller2) {
         manager = controller.getManager();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH); 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setTitle("Hanoi Debt Tower Dashboard");
         setLayout(new BorderLayout());
 
@@ -76,9 +82,9 @@ public class FADashboard extends JFrame {
                 adjustLayout(getWidth(), getHeight());
             }
         });
-        
+
         setupBackground();
-        
+
         // Main layer
         mainLayer = new JPanel(null);
         mainLayer.setOpaque(false);
@@ -89,7 +95,7 @@ public class FADashboard extends JFrame {
         createSidebar();
         createTopRow();
         createBottomRow();
-        
+
         // Initial layout adjustment
         adjustLayout(getWidth(), getHeight());
     }
@@ -99,12 +105,12 @@ public class FADashboard extends JFrame {
         if (backgroundLabel != null) {
             backgroundLabel.setBounds(0, 0, screenWidth, screenHeight);
         }
-        
+
         // Update main layer
         if (mainLayer != null) {
             mainLayer.setBounds(0, 0, screenWidth, screenHeight);
         }
-        
+
         // Adjust all components based on screen size
         adjustComponentPositions(screenWidth, screenHeight);
     }
@@ -113,27 +119,27 @@ public class FADashboard extends JFrame {
         // Calculate positions based on screen size
         int sidebarWidth = 80;
         int leftMargin = 90; // Space from sidebar
-        
+
         // Top row positions
         int topY = 30;
         int topRowHeight = 400;
-        
+
         // Bottom row positions
         int bottomY = 450;
         int bottomRowHeight = 260;
-        
+
         // Component widths
-        int towerWidth = (int)(screenWidth * 0.35);
+        int towerWidth = (int) (screenWidth * 0.35);
         towerWidth = Math.max(500, Math.min(towerWidth, 700));
-        
-        int reportWidth = (int)(screenWidth * 0.25);
+
+        int reportWidth = (int) (screenWidth * 0.25);
         reportWidth = Math.max(350, Math.min(reportWidth, 500));
-        
+
         // ADJUST: Sidebar position and size
         if (sidebar != null) {
             sidebar.setBounds(10, 100, sidebarWidth, screenHeight - 200);
         }
-        
+
         // ADJUST: Tower container position and size
         if (towerContainer != null) {
             towerContainer.setBounds(leftMargin, topY, towerWidth, topRowHeight);
@@ -141,23 +147,23 @@ public class FADashboard extends JFrame {
                 towerVis.setBounds(0, 0, towerWidth, topRowHeight);
             }
         }
-        
+
         // ADJUST: Report creation panel position and size
         if (reportCreationPanel != null) {
             int reportX = leftMargin + towerWidth + 40;
             reportCreationPanel.setBounds(reportX, topY, reportWidth, topRowHeight);
         }
-        
+
         // ADJUST: Reports panel position and size
         if (reportsPanel != null) {
             reportsPanel.setBounds(leftMargin, bottomY, towerWidth, 100);
         }
-        
+
         // ADJUST: Logs panel position and size
         if (logsPanel != null) {
             logsPanel.setBounds(leftMargin, bottomY + 120, towerWidth, bottomRowHeight - 120);
         }
-        
+
         // ADJUST: Appointment schedule panel position and size
         if (appointmentSchedulePanel != null) {
             int scheduleX = leftMargin + towerWidth + 40;
@@ -168,7 +174,7 @@ public class FADashboard extends JFrame {
     private void setupBackground() {
         try {
             BufferedImage bg = ImageIO.read(new File("Images/DashboardMainBackground.png"));
-            
+
             backgroundLabel = new JLabel() {
                 @Override
                 protected void paintComponent(Graphics g) {
@@ -180,25 +186,25 @@ public class FADashboard extends JFrame {
                     }
                 }
             };
-            
+
         } catch (IOException e) {
             backgroundLabel = new JLabel();
             backgroundLabel.setOpaque(true);
             backgroundLabel.setBackground(new Color(60, 40, 30));
         }
-        
+
         backgroundLabel.setBounds(0, 0, getWidth(), getHeight());
         layeredPane.add(backgroundLabel, JLayeredPane.DEFAULT_LAYER);
     }
-    
+
     private JPanel sidebar;
     private TowerVisualizationPanel towerVis;
-    
+
     private void createSidebar() {
         sidebar = new JPanel();
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS)); 
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setOpaque(false);
-        
+
         // ADJUST: Sidebar position (x, y, width, height)
         sidebar.setBounds(10, 100, 80, 600);
 
@@ -209,96 +215,336 @@ public class FADashboard extends JFrame {
         hanoi.setBorder(BorderFactory.createEmptyBorder(10, 10, 20, 0));
         hanoi.setAlignmentX(Component.CENTER_ALIGNMENT);
         sidebar.add(hanoi);
-        
+
         sidebar.add(Box.createVerticalStrut(40));
 
-        // DASHBOARD
-        sidebar.add(createSidebarIcon("DASH", "Dashboard", e -> {}));
+        // DASHBOARD button - Active by default
+        SidebarButton dashboardBtn = createSidebarButton("DASH", "Dashboard", () -> {
+            showDashboard();
+            log("Dashboard view activated");
+        });
+        sidebar.add(dashboardBtn);
         sidebar.add(Box.createVerticalStrut(2));
-        sidebar.add(createSidebarLabel("BOARD", e -> {}));
+
+        // DASHBOARD sub-label
+        JLabel dashboardSubLabel = createSidebarSubLabel("BOARD");
+        sidebar.add(dashboardSubLabel);
         sidebar.add(Box.createVerticalStrut(40));
-        
-        // CLIENT
-        sidebar.add(createSidebarIcon("CLIENT", "Client", e -> {}));
+
+        // CLIENT button
+        SidebarButton clientBtn = createSidebarButton("CLIENT", "Client Management", () -> {
+            showClientManagement();
+            log("Client Management view activated");
+        });
+        sidebar.add(clientBtn);
         sidebar.add(Box.createVerticalStrut(40));
-        
-        // HISTORY
-        sidebar.add(createSidebarIcon("HISTORY", "History", e -> {}));
+
+        // HISTORY button
+        SidebarButton historyBtn = createSidebarButton("HISTORY", "Transaction History", () -> {
+            showHistory();
+            log("Transaction History view activated");
+        });
+        sidebar.add(historyBtn);
         sidebar.add(Box.createVerticalStrut(40));
-        
-        // PROFILE
-        sidebar.add(createSidebarIcon("PROFILE", "Profile", e -> {}));
+
+        // PROFILE button
+        SidebarButton profileBtn = createSidebarButton("PROFILE", "User Profile", () -> {
+            showProfile();
+            log("User Profile view activated");
+        });
+        sidebar.add(profileBtn);
+
+        // Set dashboard as active by default
+        setActiveSidebarButton(dashboardBtn);
 
         mainLayer.add(sidebar);
     }
 
-    private JPanel createSidebarIcon(String text, String tooltip, ActionListener action) {
-        JPanel item = new JPanel(new BorderLayout());
-        item.setToolTipText(tooltip);
-        item.setOpaque(false);
-        item.setMaximumSize(new Dimension(80, 50));
-        item.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        JLabel icon = new JLabel(text); 
-        icon.setForeground(Color.WHITE);
-        icon.setFont(new Font("SansSerif", Font.BOLD, 18));
-        icon.setHorizontalAlignment(SwingConstants.CENTER);
-        item.add(icon, BorderLayout.CENTER);
-        
-        item.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                action.actionPerformed(null);
+    // SidebarButton inner class
+    private class SidebarButton extends JButton {
+        private boolean isActive = false;
+
+        public SidebarButton(String text) {
+            super(text);
+            setupButton();
+        }
+
+        private void setupButton() {
+            setForeground(SIDEBAR_INACTIVE_COLOR);
+            setFont(new Font("SansSerif", Font.BOLD, 18));
+            setHorizontalAlignment(SwingConstants.CENTER);
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setMaximumSize(new Dimension(80, 50));
+            setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            // Add hover effect
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    if (!isActive) {
+                        setForeground(SIDEBAR_HOVER_COLOR);
+                    }
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    if (!isActive) {
+                        setForeground(SIDEBAR_INACTIVE_COLOR);
+                    }
+                }
+            });
+        }
+
+        public void setActive(boolean active) {
+            this.isActive = active;
+            if (active) {
+                setForeground(SIDEBAR_ACTIVE_COLOR);
+                setFont(new Font("SansSerif", Font.BOLD, 20)); // Slightly larger when active
+            } else {
+                setForeground(SIDEBAR_INACTIVE_COLOR);
+                setFont(new Font("SansSerif", Font.BOLD, 18));
             }
+        }
+
+        public boolean isActive() {
+            return isActive;
+        }
+    }
+
+    private SidebarButton createSidebarButton(String text, String tooltip, Runnable action) {
+        SidebarButton button = new SidebarButton(text);
+        button.setToolTipText(tooltip);
+
+        button.addActionListener(e -> {
+            // Execute the action
+            action.run();
+
+            // Update active state
+            setActiveSidebarButton(button);
         });
 
-        JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.add(item);
-        container.setOpaque(false);
-        container.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        return container;
+        return button;
     }
-    
-    private JPanel createSidebarLabel(String text, ActionListener action) {
-        JPanel item = new JPanel(new BorderLayout());
-        item.setOpaque(false);
-        item.setMaximumSize(new Dimension(80, 20));
-        item.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+    private JLabel createSidebarSubLabel(String text) {
         JLabel label = new JLabel(text);
         label.setForeground(Color.WHITE);
         label.setFont(new Font("SansSerif", Font.PLAIN, 10));
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        item.add(label, BorderLayout.CENTER);
+        label.setMaximumSize(new Dimension(80, 20));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return label;
+    }
 
-        item.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                action.actionPerformed(null);
+    private void setActiveSidebarButton(SidebarButton button) {
+        // Deactivate current button
+        if (currentActiveButton != null) {
+            currentActiveButton.setActive(false);
+        }
+
+        // Activate new button
+        button.setActive(true);
+        currentActiveButton = button;
+    }
+
+    // Sidebar button functionalities
+    private void showDashboard() {
+        // This is already the dashboard view
+        // You could add specific dashboard refresh logic here
+        log("Refreshing dashboard data...");
+
+        // Example: Refresh tower visualization
+        if (towerVis != null) {
+            towerVis.repaint();
+        }
+
+        // Example: Update logs
+        log("Dashboard refreshed at: " + new java.util.Date());
+    }
+
+    private void showClientManagement() {
+        // Create and show client management dialog/modal
+        log("Opening Client Management...");
+
+        JDialog clientDialog = new JDialog(this, "Client Management", true);
+        clientDialog.setSize(600, 400);
+        clientDialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Client management UI components
+        JLabel title = new JLabel("Client Management", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 24));
+        title.setForeground(ORANGE_ACCENT);
+
+        JTextArea clientInfo = new JTextArea();
+        clientInfo.setText("Client Management Features:\n\n" +
+                "1. View Client List\n" +
+                "2. Add New Client\n" +
+                "3. Edit Client Information\n" +
+                "4. View Client Debt History\n" +
+                "5. Schedule Appointments\n" +
+                "6. Generate Client Reports");
+        clientInfo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        clientInfo.setEditable(false);
+        clientInfo.setOpaque(false);
+
+        JButton closeBtn = new JButton("Close");
+        closeBtn.addActionListener(e -> clientDialog.dispose());
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(new JScrollPane(clientInfo), BorderLayout.CENTER);
+        panel.add(closeBtn, BorderLayout.SOUTH);
+
+        clientDialog.add(panel);
+        clientDialog.setVisible(true);
+    }
+
+    private void showHistory() {
+        // Create and show history dialog
+        log("Opening Transaction History...");
+
+        JDialog historyDialog = new JDialog(this, "Transaction History", true);
+        historyDialog.setSize(700, 500);
+        historyDialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // History UI components
+        JLabel title = new JLabel("Transaction History", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 24));
+        title.setForeground(ORANGE_ACCENT);
+
+        // Create a table for transaction history
+        String[] columns = { "Date", "Client", "Amount", "Type", "Status" };
+        Object[][] data = {
+                { "2024-01-15", "John Doe", "$1,250.00", "Payment", "Completed" },
+                { "2024-01-14", "Jane Smith", "$2,500.00", "Debt Added", "Pending" },
+                { "2024-01-13", "Bob Johnson", "$750.00", "Payment", "Completed" },
+                { "2024-01-12", "Alice Brown", "$3,200.00", "Debt Added", "Pending" },
+                { "2024-01-11", "Charlie Wilson", "$1,800.00", "Payment", "Completed" }
+        };
+
+        JTable historyTable = new JTable(data, columns);
+        historyTable.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        historyTable.setRowHeight(25);
+
+        JScrollPane tableScroll = new JScrollPane(historyTable);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton exportBtn = new JButton("Export to CSV");
+        JButton refreshBtn = new JButton("Refresh");
+        JButton closeBtn = new JButton("Close");
+
+        exportBtn.addActionListener(e -> log("Exporting history to CSV..."));
+        refreshBtn.addActionListener(e -> log("Refreshing history data..."));
+        closeBtn.addActionListener(e -> historyDialog.dispose());
+
+        buttonPanel.add(exportBtn);
+        buttonPanel.add(refreshBtn);
+        buttonPanel.add(closeBtn);
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(tableScroll, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        historyDialog.add(panel);
+        historyDialog.setVisible(true);
+    }
+
+    private void showProfile() {
+        // Create and show profile dialog
+        log("Opening User Profile...");
+
+        JDialog profileDialog = new JDialog(this, "User Profile", true);
+        profileDialog.setSize(500, 400);
+        profileDialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Profile UI components
+        JLabel title = new JLabel("User Profile", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 24));
+        title.setForeground(ORANGE_ACCENT);
+
+        // Profile information
+        JPanel infoPanel = new JPanel(new GridLayout(6, 2, 10, 10));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        infoPanel.add(new JLabel("Username:"));
+        infoPanel.add(new JLabel("financial_advisor"));
+
+        infoPanel.add(new JLabel("Name:"));
+        infoPanel.add(new JLabel("John Smith"));
+
+        infoPanel.add(new JLabel("Email:"));
+        infoPanel.add(new JLabel("john.smith@company.com"));
+
+        infoPanel.add(new JLabel("Role:"));
+        infoPanel.add(new JLabel("Financial Advisor"));
+
+        infoPanel.add(new JLabel("Total Clients:"));
+        infoPanel.add(new JLabel("23,113"));
+
+        infoPanel.add(new JLabel("Solved Cases:"));
+        infoPanel.add(new JLabel("11,241"));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton editBtn = new JButton("Edit Profile");
+        JButton logoutBtn = new JButton("Logout");
+        JButton closeBtn = new JButton("Close");
+
+        editBtn.addActionListener(e -> {
+            log("Editing profile...");
+            // Open edit profile dialog
+        });
+
+        logoutBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(profileDialog,
+                    "Are you sure you want to logout?",
+                    "Confirm Logout",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                log("User logged out");
+                profileDialog.dispose();
+                // Here you would typically close the application or show login screen
             }
         });
 
-        JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.add(item);
-        container.setOpaque(false);
-        container.setAlignmentX(Component.CENTER_ALIGNMENT);
+        closeBtn.addActionListener(e -> profileDialog.dispose());
 
-        return container;
+        buttonPanel.add(editBtn);
+        buttonPanel.add(logoutBtn);
+        buttonPanel.add(closeBtn);
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(infoPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        profileDialog.add(panel);
+        profileDialog.setVisible(true);
     }
+
+    // Rest of the class remains the same (createTopRow, createBottomRow, etc.)
+    // ... [All other methods remain unchanged] ...
 
     private void createTopRow() {
         // Tower Panel
         towerContainer = new RoundedPanel(20, Color.WHITE);
         towerContainer.setLayout(null);
-        
+
         // ADJUST: Tower container position (x, y, width, height)
         towerContainer.setBounds(90, 30, 600, 400);
 
         towerVis = new TowerVisualizationPanel();
-        
+
         // ADJUST: Tower visualization position within container (x, y, width, height)
         towerVis.setBounds(0, 0, 600, 400);
         towerContainer.add(towerVis);
@@ -306,7 +552,7 @@ public class FADashboard extends JFrame {
 
         // Create Report Panel
         reportCreationPanel = createReportCreationPanel();
-        
+
         // ADJUST: Report creation panel position (x, y, width, height)
         reportCreationPanel.setBounds(710, 30, 450, 400);
         mainLayer.add(reportCreationPanel);
@@ -318,36 +564,36 @@ public class FADashboard extends JFrame {
 
         // Reports Panel
         reportsPanel = createReportsPanel();
-        
+
         // ADJUST: Reports panel position (x, y, width, height)
         reportsPanel.setBounds(90, startY, 600, 100);
         mainLayer.add(reportsPanel);
-        
+
         // Appointment Schedule Panel
         appointmentSchedulePanel = createAppointmentSchedulePanel();
-        
+
         // ADJUST: Appointment schedule panel position (x, y, width, height)
         appointmentSchedulePanel.setBounds(710, startY, 450, height);
         mainLayer.add(appointmentSchedulePanel);
 
         // Logs Panel
         logsPanel = createLogsPanel();
-        
+
         // ADJUST: Logs panel position (x, y, width, height)
         logsPanel.setBounds(90, startY + 120, 600, height - 120);
         mainLayer.add(logsPanel);
     }
-    
+
     private JPanel createReportCreationPanel() {
         RoundedPanel panel = new RoundedPanel(20, Color.WHITE);
         panel.setLayout(null);
-        
+
         // ADJUST: Report creation panel position (x, y, width, height)
         panel.setBounds(710, 30, 450, 400);
 
         JLabel title = new JLabel("Create Report");
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
-        
+
         // ADJUST: Title position within panel (x, y, width, height)
         title.setBounds(20, 20, 200, 30);
         panel.add(title);
@@ -356,64 +602,77 @@ public class FADashboard extends JFrame {
         int gap = 55;
         int fieldH = 30;
         int width = 410;
-        
+
         // Total Client Appointments
         addLabel(panel, "Total Client Appointments:", 20, y - 20);
-        
+
         // ADJUST: Appointments field position (x, y, width, height)
         appointmentsField = addTextField(panel, "", 20, y, width, fieldH);
 
         // Total Solved
         y += gap;
         addLabel(panel, "Total Solved:", 20, y - 20);
-        
+
         // ADJUST: Solved field position (x, y, width, height)
         solvedField = addTextField(panel, "", 20, y, width, fieldH);
 
         // Total Failed
         y += gap;
         addLabel(panel, "Total Failed:", 20, y - 20);
-        
+
         // ADJUST: Failed field position (x, y, width, height)
         failedField = addTextField(panel, "", 20, y, width, fieldH);
 
         // Total Added
         y += gap;
         addLabel(panel, "Total Added:", 20, y - 20);
-        
+
         // ADJUST: Added field position (x, y, width, height)
         addedField = addTextField(panel, "", 20, y, width, fieldH);
 
         // PUSH Button
         JButton pushBtn = createOrangeButton("PUSH");
-        
+
         // ADJUST: Push button position (x, y, width, height)
         pushBtn.setBounds(20, 340, width, 40);
-        pushBtn.addActionListener(e -> log("PUSH button pressed."));
+        pushBtn.addActionListener(e -> {
+            log("PUSH button pressed.");
+            log("Creating report with data:");
+            log("  Appointments: " + appointmentsField.getText());
+            log("  Solved: " + solvedField.getText());
+            log("  Failed: " + failedField.getText());
+            log("  Added: " + addedField.getText());
+
+            // Show confirmation
+            JOptionPane.showMessageDialog(this,
+                    "Report created successfully!\nData has been saved.",
+                    "Report Created",
+                    JOptionPane.INFORMATION_MESSAGE);
+        });
         panel.add(pushBtn);
 
         return panel;
     }
 
     private JPanel createReportsPanel() {
-        JPanel container = new JPanel(null); 
+        JPanel container = new JPanel(null);
         container.setOpaque(false);
-        
+
         // ADJUST: Reports container position (x, y, width, height)
         container.setBounds(90, 450, 600, 100);
 
         JLabel reportsTitle = new JLabel("REPORTS");
         reportsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
         reportsTitle.setForeground(Color.WHITE);
-        
+
         // ADJUST: Reports title position (x, y, width, height)
         reportsTitle.setBounds(0, 0, 100, 20);
         container.add(reportsTitle);
-        
+
         JPanel reportBoxes = new JPanel(new GridLayout(1, 3, 15, 0));
         reportBoxes.setOpaque(false);
-        reportBoxes.add(createReportBox("TOTAL CLIENTS", "23,113", DARK_ORANGE_REPORT)); 
-        reportBoxes.add(createReportBox("TOTAL APPOINTMENT", "21", BLUE_ACCENT)); 
+        reportBoxes.add(createReportBox("TOTAL CLIENTS", "23,113", DARK_ORANGE_REPORT));
+        reportBoxes.add(createReportBox("TOTAL APPOINTMENT", "21", BLUE_ACCENT));
         reportBoxes.add(createReportBox("SOLVED", "11241 users", RED_REPORT));
 
         // ADJUST: Report boxes position (x, y, width, height)
@@ -426,7 +685,7 @@ public class FADashboard extends JFrame {
     private JPanel createReportBox(String title, String value, Color bgColor) {
         RoundedPanel panel = new RoundedPanel(10, bgColor);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        
+
         // ADJUST: Report box size (width, height)
         panel.setPreferredSize(new Dimension(190, 75));
 
@@ -440,7 +699,7 @@ public class FADashboard extends JFrame {
         valueLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
         valueLabel.setForeground(Color.WHITE);
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
+
         panel.add(titleLabel);
         panel.add(valueLabel);
 
@@ -450,13 +709,13 @@ public class FADashboard extends JFrame {
     private JPanel createAppointmentSchedulePanel() {
         RoundedPanel panel = new RoundedPanel(10, Color.WHITE);
         panel.setLayout(null);
-        
+
         // ADJUST: Appointment panel position (x, y, width, height)
         panel.setBounds(710, 450, 450, 260);
 
         JLabel title = new JLabel("Appointment Schedule");
         title.setFont(new Font("SansSerif", Font.BOLD, 20));
-        
+
         // ADJUST: Title position within panel (x, y, width, height)
         title.setBounds(20, 20, 300, 30);
         panel.add(title);
@@ -464,25 +723,25 @@ public class FADashboard extends JFrame {
         JTextArea scheduleText = new JTextArea();
         scheduleText.setText(
                 "Maria is set for a consultation within this\n" +
-                "day, just clicked the zoom link below.\n\n" +
-                "John is set for consultation for being\n" +
-                "inactive.");
+                        "day, just clicked the zoom link below.\n\n" +
+                        "John is set for consultation for being\n" +
+                        "inactive.");
 
         scheduleText.setFont(new Font("SansSerif", Font.PLAIN, 13));
         scheduleText.setEditable(false);
         scheduleText.setLineWrap(true);
         scheduleText.setWrapStyleWord(true);
         scheduleText.setOpaque(false);
-        
+
         // ADJUST: Schedule text position (x, y, width, height)
         scheduleText.setBounds(20, 60, 410, 100);
         panel.add(scheduleText);
-        
+
         int lineY = 170;
         for (int i = 0; i < 4; i++) {
             JLabel line = new JLabel();
             line.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY.brighter()));
-            
+
             // ADJUST: Line position (x, y, width, height)
             line.setBounds(20, lineY + (i * 20), 410, 1);
             panel.add(line);
@@ -494,7 +753,7 @@ public class FADashboard extends JFrame {
     private JPanel createLogsPanel() {
         JPanel logContainer = new JPanel(new BorderLayout());
         logContainer.setBackground(Color.BLACK);
-        
+
         // ADJUST: Logs container position (x, y, width, height)
         logContainer.setBounds(90, 570, 600, 140);
 
@@ -503,30 +762,31 @@ public class FADashboard extends JFrame {
         logsTitle.setForeground(Color.WHITE);
         logsTitle.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         logContainer.add(logsTitle, BorderLayout.NORTH);
-        
+
         logsArea = new JTextArea();
         logsArea.setEditable(false);
         logsArea.setBackground(Color.BLACK);
         logsArea.setForeground(Color.WHITE);
         logsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        logsArea.setText(" > System Initialized.\n" + 
-                         " > Launched 3 debts to Active Debt Stack.");
+        logsArea.setText(" > System Initialized.\n" +
+                " > Launched 3 debts to Active Debt Stack.\n" +
+                " > Dashboard loaded successfully.");
 
         logsScrollPane = new JScrollPane(logsArea);
         logsScrollPane.setBorder(null);
         logsScrollPane.setBackground(Color.BLACK);
         logsScrollPane.getViewport().setBackground(Color.BLACK);
-        
+
         logContainer.add(logsScrollPane, BorderLayout.CENTER);
 
         return logContainer;
     }
-    
+
     private void addLabel(JPanel p, String text, int x, int y) {
         JLabel l = new JLabel(text);
         l.setFont(new Font("SansSerif", Font.PLAIN, 12));
         l.setForeground(Color.BLACK);
-        
+
         // ADJUST: Label position (x, y, width, height)
         l.setBounds(x, y, 300, 20);
         p.add(l);
@@ -534,7 +794,7 @@ public class FADashboard extends JFrame {
 
     private JTextField addTextField(JPanel p, String ph, int x, int y, int w, int h) {
         JTextField tf = new JTextField();
-        
+
         // ADJUST: Text field position and size (x, y, width, height)
         tf.setBounds(x, y, w, h);
         tf.setBorder(BorderFactory.createCompoundBorder(
@@ -603,14 +863,14 @@ public class FADashboard extends JFrame {
             g2.setFont(new Font("SansSerif", Font.BOLD, 24));
             String title = "THE HANOI DEBT TOWER";
             FontMetrics fm = g2.getFontMetrics();
-            
+
             // ADJUST: Title position (center horizontally, y=40)
             g2.drawString(title, (w - fm.stringWidth(title)) / 2, 40);
 
             // Base Line
             int baseY = h - 60;
             g2.setColor(new Color(150, 80, 150));
-            
+
             // ADJUST: Base line position and size (x, y, width, height)
             g2.fillRoundRect(50, baseY, w - 100, 15, 10, 10);
 
@@ -621,14 +881,14 @@ public class FADashboard extends JFrame {
             g2.setColor(TOWER_PILLAR_COLOR);
             for (int i = 0; i < 3; i++) {
                 int cx = colW * i + colW / 2;
-                
+
                 // ADJUST: Pillar position and size (x, y, width, height)
                 g2.fillRoundRect(cx - 5, 80, 10, baseY - 80, 10, 10);
 
                 g2.setColor(Color.BLACK);
                 g2.setFont(new Font("SansSerif", Font.BOLD, 12));
                 String lbl = labels[i];
-                
+
                 // ADJUST: Column label position
                 g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2, baseY + 30);
             }
@@ -663,7 +923,7 @@ public class FADashboard extends JFrame {
             g2.setColor(Color.WHITE);
             g2.setFont(new Font("SansSerif", Font.BOLD, 10));
             FontMetrics fm = g2.getFontMetrics();
-            
+
             // ADJUST: Text position (center horizontally, y + height/2 + 3)
             g2.drawString(text, centerX - fm.stringWidth(text) / 2, y + height / 2 + 3);
         }
