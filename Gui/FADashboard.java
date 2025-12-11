@@ -75,8 +75,8 @@ public class FADashboard extends JFrame {
     private int reportCreationWidth = 450;
     private int reportCreationHeight = 500;
 
-    private int reportsX = 90;
-    private int reportsY = 450;
+    private int reportsX = 200;
+    private int reportsY = 600;
     private int reportsWidth = 600;
     private int reportsHeight = 100;
 
@@ -87,7 +87,7 @@ public class FADashboard extends JFrame {
 
     private int logsX = 100;
     private int logsY = 800;
-    private int logsWidth = 600;
+    private int logsWidth = 1330;
     private int logsHeight = 200;
 
     public FADashboard(AppController controller2) {
