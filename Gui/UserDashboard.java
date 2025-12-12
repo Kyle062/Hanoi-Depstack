@@ -776,7 +776,7 @@ public class UserDashboard extends JFrame {
     }
 
     private void showConsultationDialog(Component parentComponent) {
-        JPanel formPanel = new JPanel(new GridLayout(5, 2, 5, 10));
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 10)); // Changed from 5 to 4 rows
 
         JLabel reasonLabel = new JLabel("Reason for Consultation:");
         JTextField reasonField = new JTextField(20);
@@ -802,9 +802,10 @@ public class UserDashboard extends JFrame {
         String[] platforms = { "Zoom", "Google Meet", "Microsoft Teams", "Phone Call", "In Person" };
         JComboBox<String> platformComboBox = new JComboBox<>(platforms);
 
-        JLabel dateLabel = new JLabel("Preferred Date (YYYY-MM-DD):");
-        JTextField dateField = new JTextField(20);
-        dateField.setText(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        // REMOVED: Preferred date field
+        // JLabel dateLabel = new JLabel("Preferred Date (YYYY-MM-DD):");
+        // JTextField dateField = new JTextField(20);
+        // dateField.setText(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 
         formPanel.add(reasonLabel);
         formPanel.add(reasonField);
@@ -815,8 +816,9 @@ public class UserDashboard extends JFrame {
         formPanel.add(platformLabel);
         formPanel.add(platformComboBox);
 
-        formPanel.add(dateLabel);
-        formPanel.add(dateField);
+        // REMOVED: Date field row
+        // formPanel.add(dateLabel);
+        // formPanel.add(dateField);
 
         int result = JOptionPane.showConfirmDialog(
                 parentComponent,
@@ -829,7 +831,8 @@ public class UserDashboard extends JFrame {
             String reason = reasonField.getText().trim();
             String advisorSelection = (String) advisorComboBox.getSelectedItem();
             String platform = (String) platformComboBox.getSelectedItem();
-            String date = dateField.getText().trim();
+            // REMOVED: Date field
+            // String date = dateField.getText().trim();
 
             if (reason.isEmpty()) {
                 JOptionPane.showMessageDialog(parentComponent,
@@ -845,21 +848,25 @@ public class UserDashboard extends JFrame {
                 return;
             }
 
-            if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                JOptionPane.showMessageDialog(parentComponent,
-                        "Please enter date in YYYY-MM-DD format.",
-                        "Date Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            // REMOVED: Date validation
+            // if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            // JOptionPane.showMessageDialog(parentComponent,
+            // "Please enter date in YYYY-MM-DD format.",
+            // "Date Error", JOptionPane.ERROR_MESSAGE);
+            // return;
+            // }
 
             String advisorUsername = advisorSelection.substring(advisorSelection.lastIndexOf('(') + 1,
                     advisorSelection.lastIndexOf(')'));
+
+            // Use current date as appointment date
+            String appointmentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 
             ConsultationRequest request = new ConsultationRequest(
                     controller.getCurrentUsername(),
                     controller.getCurrentUser().getFullName(),
                     reason,
-                    date + " " + platform);
+                    appointmentDate + " " + platform); // Include platform in preferred date field
 
             DataManager.addConsultationRequest(request);
 
@@ -868,7 +875,7 @@ public class UserDashboard extends JFrame {
             System.out.println("Reason: " + reason);
             System.out.println("Advisor: " + advisorSelection);
             System.out.println("Platform: " + platform);
-            System.out.println("Date: " + date);
+            System.out.println("Date: " + appointmentDate);
 
             log("Consultation request submitted to " + advisorSelection);
 

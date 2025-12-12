@@ -54,7 +54,7 @@ public class FADashboard extends JFrame {
     private JTextArea scheduleText;
 
     // Report Creation Fields
-    private JTextField reportClientField, reportTypeField, reportAmountField, reportDueDateField;
+    private JTextField reportClientField, reportTypeField, reportDueDateField;
     private JTextArea reportDescriptionArea;
 
     // Colors
@@ -278,6 +278,14 @@ public class FADashboard extends JFrame {
         sidebar.add(clientBtn);
         sidebar.add(Box.createVerticalStrut(20));
 
+        // SHOW REPORT button - NEW
+        SidebarButton showReportBtn = createSidebarButton("Show Report", "Show TOS Details", () -> {
+            showCurrentReport();
+            log("Show Report activated");
+        });
+        sidebar.add(showReportBtn);
+        sidebar.add(Box.createVerticalStrut(20));
+
         // HISTORY button
         SidebarButton historyBtn = createSidebarButton("History", "Transaction History", () -> {
             showHistory();
@@ -310,11 +318,7 @@ public class FADashboard extends JFrame {
         sidebar.add(solveReportBtn);
         sidebar.add(Box.createVerticalStrut(20));
 
-        // LOGOUT button
-        SidebarButton logoutBtn = createSidebarButton("Logout", "Logout from system", () -> {
-            logout();
-        });
-        sidebar.add(logoutBtn);
+        // LOGOUT button removed from here (moved to profile)
 
         sidebar.add(Box.createVerticalGlue());
         setActiveSidebarButton(dashboardBtn);
@@ -446,6 +450,33 @@ public class FADashboard extends JFrame {
         updateAppointmentSchedule();
     }
 
+    // NEW METHOD: Show Current Report (TOS Details)
+    private void showCurrentReport() {
+        if (!clientDebts.isEmpty()) {
+            Debt topDebt = clientDebts.peek(); // Get TOS
+            
+            JOptionPane.showMessageDialog(this,
+                    "Current TOS Report Details:\n" +
+                    "=====================\n" +
+                    "Client/Report: " + topDebt.getName() + "\n" +
+                    "Current Balance: $" + String.format("%.2f", topDebt.getCurrentBalance()) + "\n" +
+                    "Original Amount: $" + String.format("%.2f", topDebt.getOriginalAmount()) + "\n" +
+                    "Interest Rate: " + topDebt.getInterestRate() + "%\n" +
+                    "Minimum Payment: $" + String.format("%.2f", topDebt.getMinimumPayment()) + "\n" +
+                    "Position: TOS (Top of Stack)\n" +
+                    "Stack Size: " + clientDebts.size() + " reports\n" +
+                    "=====================",
+                    "Current TOS Report",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "No active reports in stack!\n" +
+                    "The client debt stack is empty.",
+                    "No Reports Available",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
     // AUXILIARY BUTTON FUNCTIONALITY - Move TOS to auxiliary (LIFO)
     private void moveToAuxiliary() {
         if (!clientDebts.isEmpty()) {
@@ -562,6 +593,9 @@ public class FADashboard extends JFrame {
         mainPanel.add(title);
         mainPanel.add(Box.createVerticalStrut(10));
 
+        // Load fresh data from storage
+        consultationRequests = DataManager.loadConsultationRequests();
+        
         if (consultationRequests.isEmpty()) {
             JLabel noRequests = new JLabel("No pending consultation requests.");
             noRequests.setFont(new Font("SansSerif", Font.ITALIC, 12));
@@ -607,7 +641,7 @@ public class FADashboard extends JFrame {
         JLabel reasonLabel = new JLabel("Reason: " + request.getReason());
         reasonLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
 
-        JLabel dateLabel = new JLabel("Preferred Date: " + request.getPreferredDate());
+        JLabel dateLabel = new JLabel("Request Date: " + new SimpleDateFormat("MMM dd, yyyy").format(request.getRequestDate()));
         dateLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
 
         infoPanel.add(clientLabel);
@@ -659,20 +693,35 @@ public class FADashboard extends JFrame {
                     controller.getCurrentUser().getFullName(),
                     request.getReason(),
                     "Zoom",
-                    request.getPreferredDate(),
+                    new SimpleDateFormat("yyyy-MM-dd").format(new Date()), // Current date as appointment date
                     new Date(),
                     "SCHEDULED");
 
             scheduledAppointments.add(appointment);
+            
+            // Remove from consultation requests in DataManager storage
+            DataManager.deleteConsultationRequest(request);
+            
+            // Also remove from local list
             consultationRequests.remove(request);
 
+            // Create a debt entry for this completed appointment and add to TOS
+            String debtName = request.getClientName() + " - " + request.getReason();
+            Debt appointmentDebt = new Debt(debtName, 0.00, 0.0, 0.00);
+            clientDebts.push(appointmentDebt); // Add as new TOS
+
+            // Save all changes
+            DataManager.saveScheduledAppointments(scheduledAppointments);
+
             JOptionPane.showMessageDialog(parentDialog,
-                    "Appointment scheduled with yourself.",
+                    "Appointment scheduled with yourself and added to TOS.\n" +
+                    "Request removed from consultation list.",
                     "Appointment Scheduled", JOptionPane.INFORMATION_MESSAGE);
 
             refreshDashboardData();
             saveConsultationData();
             parentDialog.dispose();
+            log("Appointment scheduled and added to TOS: " + debtName);
             return;
         }
 
@@ -737,22 +786,36 @@ public class FADashboard extends JFrame {
                             advisorName,
                             request.getReason(),
                             platform,
-                            request.getPreferredDate(),
+                            new SimpleDateFormat("yyyy-MM-dd").format(new Date()), // Current date
                             new Date(),
                             "SCHEDULED");
 
                     scheduledAppointments.add(appointment);
+                    
+                    // Remove from consultation requests in DataManager storage
+                    DataManager.deleteConsultationRequest(request);
+                    
+                    // Also remove from local list
                     consultationRequests.remove(request);
 
+                    // Create a debt entry for this completed appointment and add to TOS
+                    String debtName = request.getClientName() + " - " + request.getReason();
+                    Debt appointmentDebt = new Debt(debtName, 0.00, 0.0, 0.00);
+                    clientDebts.push(appointmentDebt); // Add as new TOS
+
+                    // Save all changes
+                    DataManager.saveScheduledAppointments(scheduledAppointments);
+
                     log("Appointment scheduled: " + request.getClientName() +
-                            " with " + advisorName + " via " + platform);
+                            " with " + advisorName + " via " + platform + " and added to TOS");
 
                     JOptionPane.showMessageDialog(advisorDialog,
                             "Appointment scheduled successfully!\n" +
                                     "Client: " + request.getClientName() + "\n" +
                                     "Advisor: " + advisorName + "\n" +
                                     "Platform: " + platform + "\n" +
-                                    "Date: " + request.getPreferredDate(),
+                                    "Added to TOS as a new report\n" +
+                                    "Request removed from consultation list.",
                             "Appointment Scheduled", JOptionPane.INFORMATION_MESSAGE);
 
                     refreshDashboardData();
@@ -780,9 +843,20 @@ public class FADashboard extends JFrame {
                 "Confirm Rejection", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
+            // Remove from consultation requests in DataManager storage
+            DataManager.deleteConsultationRequest(request);
+            
+            // Also remove from local list
             consultationRequests.remove(request);
+            
             totalFailed++;
+            
             log("Appointment rejected for: " + request.getClientName());
+            
+            JOptionPane.showMessageDialog(parentDialog,
+                    "Request rejected and removed from consultation list.",
+                    "Request Rejected", JOptionPane.INFORMATION_MESSAGE);
+            
             refreshDashboardData();
             saveConsultationData();
             parentDialog.dispose();
@@ -806,6 +880,9 @@ public class FADashboard extends JFrame {
         mainPanel.add(title);
         mainPanel.add(Box.createVerticalStrut(10));
 
+        // Load fresh data
+        scheduledAppointments = DataManager.loadScheduledAppointments();
+        
         if (scheduledAppointments.isEmpty()) {
             JLabel noAppointments = new JLabel("No scheduled appointments.");
             noAppointments.setFont(new Font("SansSerif", Font.ITALIC, 12));
@@ -900,6 +977,9 @@ public class FADashboard extends JFrame {
         Debt completedAppointmentDebt = new Debt(debtName, 0.00, 0.0, 0.00);
         clientDebts.push(completedAppointmentDebt); // Add as new TOS
 
+        // Save updated appointment status
+        DataManager.saveScheduledAppointments(scheduledAppointments);
+
         log("Appointment completed and added to TOS: " + appointment.getClientName() +
                 " - " + appointment.getReason());
 
@@ -917,6 +997,10 @@ public class FADashboard extends JFrame {
         if (confirm == JOptionPane.YES_OPTION) {
             appointment.setStatus("CANCELLED");
             totalFailed++;
+            
+            // Save updated appointment status
+            DataManager.saveScheduledAppointments(scheduledAppointments);
+            
             log("Appointment cancelled: " + appointment.getClientName() + " with " + appointment.getAdvisorName());
             refreshDashboardData();
             saveConsultationData();
@@ -1132,7 +1216,7 @@ public class FADashboard extends JFrame {
         mainLayer.add(logsPanel);
     }
 
-    // UPDATED: Create Manual Report Creation Panel
+    // UPDATED: Create Manual Report Creation Panel (Amount field removed)
     private JPanel createManualReportCreationPanel() {
         RoundedPanel panel = new RoundedPanel(20, Color.WHITE);
         panel.setLayout(null);
@@ -1159,12 +1243,7 @@ public class FADashboard extends JFrame {
         reportTypeField = addTextField(panel, "e.g., Credit Card, Loan, Consultation", 20, y, width, fieldH);
         y += gap;
 
-        // Amount Field
-        addLabel(panel, "Amount ($):", 20, y - labelH);
-        reportAmountField = addTextField(panel, "0.00", 20, y, width, fieldH);
-        y += gap;
-
-        // Due Date Field
+        // Due Date Field (Amount field removed)
         addLabel(panel, "Due Date:", 20, y - labelH);
         reportDueDateField = addTextField(panel, "e.g., Dec 31, 2024", 20, y, width, fieldH);
         y += gap;
@@ -1196,7 +1275,6 @@ public class FADashboard extends JFrame {
     private void createManualReport() {
         String clientName = reportClientField.getText().trim();
         String reportType = reportTypeField.getText().trim();
-        String amountText = reportAmountField.getText().trim();
         String dueDate = reportDueDateField.getText().trim();
         String description = reportDescriptionArea.getText().trim();
 
@@ -1208,25 +1286,7 @@ public class FADashboard extends JFrame {
             return;
         }
 
-        double amount = 0.00;
-        try {
-            if (!amountText.isEmpty()) {
-                amount = Double.parseDouble(amountText);
-                if (amount < 0) {
-                    JOptionPane.showMessageDialog(this,
-                            "Amount cannot be negative.",
-                            "Validation Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter a valid number for amount.",
-                    "Validation Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Create the report debt
+        // Create the report debt (amount set to 0.00 as requested)
         String debtName = clientName + " - " + reportType;
         if (!description.isEmpty() && description.length() > 20) {
             // Add abbreviated description to name if it's long
@@ -1235,13 +1295,13 @@ public class FADashboard extends JFrame {
             debtName += " (" + description + ")";
         }
 
-        Debt reportDebt = new Debt(debtName, amount, 0.0, 0.00);
+        Debt reportDebt = new Debt(debtName, 0.00, 0.0, 0.00); // Amount always 0.00
 
         // Push to stack - becomes TOS (LIFO)
         clientDebts.push(reportDebt);
 
         // Log the action
-        log("MANUAL REPORT CREATED: " + debtName + " - Amount: $" + String.format("%.2f", amount));
+        log("MANUAL REPORT CREATED: " + debtName);
         
         if (!dueDate.isEmpty()) {
             log("Due Date: " + dueDate);
@@ -1255,7 +1315,7 @@ public class FADashboard extends JFrame {
                 "Report created successfully!\n" +
                 "Client: " + clientName + "\n" +
                 "Type: " + reportType + "\n" +
-                "Amount: $" + String.format("%.2f", amount) + "\n" +
+                "Amount: $0.00 (Consultation Report)\n" +
                 "Position: TOS (Top of Stack)\n" +
                 "Stack Size: " + clientDebts.size(),
                 "Report Created",
@@ -1264,7 +1324,6 @@ public class FADashboard extends JFrame {
         // Clear fields
         reportClientField.setText("");
         reportTypeField.setText("");
-        reportAmountField.setText("");
         reportDueDateField.setText("");
         reportDescriptionArea.setText("");
 
@@ -1637,7 +1696,7 @@ public class FADashboard extends JFrame {
                     g2.drawString("TOS", centerX - width / 2 + 10, yPos + 38);
                 }
 
-                // Draw balance on the right
+                // Draw balance on the right (will show $0.00 for consultation reports)
                 String balanceText = "$" + (int) d.getCurrentBalance();
                 g2.drawString(balanceText, centerX + width / 2 - 30, yPos + 25);
             }
