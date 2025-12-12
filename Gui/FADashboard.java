@@ -30,6 +30,11 @@ public class FADashboard extends JFrame {
     private List<ConsultationRequest> consultationRequests = new ArrayList<>();
     private List<ConsultationAppointment> scheduledAppointments = new ArrayList<>();
 
+    // Debt data for advisor view - Now using Stack for proper LIFO
+    private Stack<Debt> clientDebts = new Stack<>(); // Changed from List to Stack
+    private List<Debt> auxiliaryDebts = new ArrayList<>();
+    private List<Debt> paidOffDebts = new ArrayList<>();
+
     // UI components
     private JLayeredPane layeredPane;
     private JPanel mainLayer;
@@ -41,12 +46,14 @@ public class FADashboard extends JFrame {
     private JPanel reportCreationPanel;
     private JPanel appointmentSchedulePanel;
     private JPanel logsPanel;
+    private JPanel auxiliaryPanel;
 
     // Controls
     private JTextField appointmentsField, solvedField, failedField, addedField;
     private JTextArea logsArea;
     private JScrollPane logsScrollPane;
     private JTextArea scheduleText;
+    private JTextArea auxiliaryText;
 
     // Colors
     private final Color ORANGE_ACCENT = new Color(241, 122, 80);
@@ -59,6 +66,8 @@ public class FADashboard extends JFrame {
     private final Color RED_REPORT = new Color(255, 100, 50);
     private final Color DARK_ORANGE_REPORT = new Color(220, 100, 50);
     private final Color GREEN_ADD = new Color(0, 150, 0);
+    private final Color AUXILIARY_COLOR = new Color(150, 150, 200);
+    private final Color SOLVED_COLOR = new Color(100, 200, 100); // Green for solved reports
 
     // Sidebar button states
     private SidebarButton currentActiveButton = null;
@@ -97,6 +106,11 @@ public class FADashboard extends JFrame {
     private int logsWidth = 1250;
     private int logsHeight = 200;
 
+    private int auxiliaryX = 150;
+    private int auxiliaryY = 670;
+    private int auxiliaryWidth = 300;
+    private int auxiliaryHeight = 330;
+
     // Statistics
     private int totalAppointments = 0;
     private int totalSolved = 0;
@@ -130,6 +144,26 @@ public class FADashboard extends JFrame {
 
         // Calculate statistics
         updateStatistics();
+
+        // Initialize with sample debt data for visualization
+        initializeSampleDebtData();
+    }
+
+    private void initializeSampleDebtData() {
+        // Clear existing data
+        clientDebts.clear();
+        auxiliaryDebts.clear();
+        paidOffDebts.clear();
+
+        // Add sample client debts for visualization (using Stack - LIFO)
+        // Push to stack - last pushed will be TOS
+        clientDebts.push(new Debt("Mike Johnson - Car Loan", 10000.00, 5.5, 250.00));
+        clientDebts.push(new Debt("Sarah Smith - Student Loan", 15000.00, 6.8, 200.00));
+        clientDebts.push(new Debt("John Doe - Credit Card", 5000.00, 18.5, 100.00));
+
+        // Add some paid off debts
+        paidOffDebts.add(new Debt("Emma Wilson - Medical Bill", 0.00, 0.0, 0.00));
+        paidOffDebts.add(new Debt("Robert Brown - Personal Loan", 0.00, 0.0, 0.00));
     }
 
     private void updateStatistics() {
@@ -278,6 +312,22 @@ public class FADashboard extends JFrame {
             log("User Profile view activated");
         });
         sidebar.add(profileBtn);
+
+        // AUXILIARY button - Move TOS to auxiliary
+        sidebar.add(Box.createVerticalStrut(20));
+        SidebarButton auxiliaryBtn = createSidebarButton("Auxiliary", "Move TOS to Auxiliary", () -> {
+            moveToAuxiliary();
+            log("Move to Auxiliary activated");
+        });
+        sidebar.add(auxiliaryBtn);
+
+        // SOLVE REPORT button - Mark report as solved
+        sidebar.add(Box.createVerticalStrut(20));
+        SidebarButton solveReportBtn = createSidebarButton("Solve Report", "Mark report as solved", () -> {
+            solveReport();
+            log("Solve Report activated");
+        });
+        sidebar.add(solveReportBtn);
 
         // LOGOUT button
         sidebar.add(Box.createVerticalStrut(20));
@@ -434,6 +484,94 @@ public class FADashboard extends JFrame {
 
         // Update appointment schedule
         updateAppointmentSchedule();
+
+        // Update auxiliary panel
+        updateAuxiliaryPanel();
+    }
+
+    // AUXILIARY BUTTON FUNCTIONALITY - Same as UserDashboard
+    private void moveToAuxiliary() {
+        if (!clientDebts.isEmpty()) {
+            Debt topDebt = clientDebts.peek(); // Get TOS (LIFO - Stack.peek())
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Move TOS to auxiliary?\n" +
+                            "Client: " + topDebt.getName() + "\n" +
+                            "Balance: $" + String.format("%.2f", topDebt.getCurrentBalance()) + "\n" +
+                            "Position: TOS (Top of Stack)",
+                    "Confirm Move to Auxiliary",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                Debt movedDebt = clientDebts.pop(); // Remove from top of stack (LIFO)
+                auxiliaryDebts.add(0, movedDebt); // Add to beginning for LIFO display
+
+                log("MOVED: " + movedDebt.getName() + " from TOS to auxiliary (LIFO)");
+                JOptionPane.showMessageDialog(this,
+                        "Successfully moved to auxiliary:\n" +
+                                movedDebt.getName() + "\n" +
+                                "Balance: $" + String.format("%.2f", movedDebt.getCurrentBalance()),
+                        "Moved to Auxiliary",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                refreshAllPanels();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "No active debt to move!\n" +
+                            "Client debt stack is empty.",
+                    "No TOS Available",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    // SOLVE REPORT BUTTON FUNCTIONALITY
+    private void solveReport() {
+        if (!clientDebts.isEmpty()) {
+            Debt topReport = clientDebts.peek(); // Get TOS (LIFO)
+
+            // Check if it's a report (contains " - " separator)
+            if (topReport.getName().contains(" - ")) {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Mark this report as SOLVED?\n" +
+                                "Report: " + topReport.getName() + "\n" +
+                                "Balance: $" + String.format("%.2f", topReport.getCurrentBalance()) + "\n" +
+                                "Position: TOS (Top of Stack)",
+                        "Confirm Solve Report",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    Debt solvedReport = clientDebts.pop(); // Remove from top of stack
+                    solvedReport.makePayment(solvedReport.getCurrentBalance()); // Set balance to 0
+
+                    // Add to paid-off at the beginning (LIFO order)
+                    paidOffDebts.add(0, solvedReport);
+
+                    log("SOLVED: Report marked as solved - " + solvedReport.getName());
+                    JOptionPane.showMessageDialog(this,
+                            "Report marked as SOLVED:\n" +
+                                    solvedReport.getName() + "\n" +
+                                    "Moved to Paid-Off section",
+                            "Report Solved",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    refreshAllPanels();
+                }
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "The TOS is not a report.\n" +
+                                "Only reports can be marked as solved.\n" +
+                                "Current TOS: " + topReport.getName(),
+                        "Not a Report",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "No reports to solve!\n" +
+                            "Client debt stack is empty.",
+                    "No Reports Available",
+                    JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     private void showClientConsultationAppointment() {
@@ -807,7 +945,17 @@ public class FADashboard extends JFrame {
     private void completeAppointment(ConsultationAppointment appointment, JDialog parentDialog) {
         appointment.setStatus("COMPLETED");
         totalSolved++;
-        log("Appointment completed: " + appointment.getClientName() + " with " + appointment.getAdvisorName());
+
+        // Create a debt entry for this completed appointment
+        String debtName = appointment.getClientName() + " - " + appointment.getReason();
+        Debt completedAppointmentDebt = new Debt(debtName, 0.00, 0.0, 0.00);
+
+        // Move to paid-off immediately (no delay) at the beginning for LIFO
+        paidOffDebts.add(0, completedAppointmentDebt);
+
+        log("Appointment completed and moved to paid-off: " + appointment.getClientName() +
+                " - " + appointment.getReason());
+
         refreshDashboardData();
         saveConsultationData();
         parentDialog.dispose();
@@ -1031,9 +1179,15 @@ public class FADashboard extends JFrame {
     }
 
     private void createBottomRow() {
+        // Adjust reports panel position
         reportsPanel = createReportsPanel();
         reportsPanel.setBounds(reportsX, reportsY, reportsWidth, reportsHeight);
         mainLayer.add(reportsPanel);
+
+        // Add auxiliary panel
+        auxiliaryPanel = createAuxiliaryPanel();
+        auxiliaryPanel.setBounds(auxiliaryX, auxiliaryY, auxiliaryWidth, auxiliaryHeight);
+        mainLayer.add(auxiliaryPanel);
 
         appointmentSchedulePanel = createAppointmentSchedulePanel();
         appointmentSchedulePanel.setBounds(appointmentX, appointmentY, appointmentWidth, appointmentHeight);
@@ -1042,6 +1196,59 @@ public class FADashboard extends JFrame {
         logsPanel = createLogsPanel();
         logsPanel.setBounds(logsX, logsY, logsWidth, logsHeight);
         mainLayer.add(logsPanel);
+    }
+
+    private JPanel createAuxiliaryPanel() {
+        RoundedPanel panel = new RoundedPanel(15, AUXILIARY_COLOR);
+        panel.setLayout(new BorderLayout());
+        panel.setBounds(0, 0, auxiliaryWidth, auxiliaryHeight);
+
+        JLabel title = new JLabel("Auxiliary Debts", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 16));
+        title.setForeground(Color.WHITE);
+        title.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        panel.add(title, BorderLayout.NORTH);
+
+        auxiliaryText = new JTextArea();
+        auxiliaryText.setEditable(false);
+        auxiliaryText.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        auxiliaryText.setForeground(Color.WHITE);
+        auxiliaryText.setOpaque(false);
+        auxiliaryText.setLineWrap(true);
+        auxiliaryText.setWrapStyleWord(true);
+
+        JScrollPane scrollPane = new JScrollPane(auxiliaryText);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        updateAuxiliaryPanel();
+
+        return panel;
+    }
+
+    private void updateAuxiliaryPanel() {
+        if (auxiliaryText != null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Auxiliary Debts (LIFO):\n");
+            sb.append("========================\n\n");
+
+            if (auxiliaryDebts.isEmpty()) {
+                sb.append("No debts in auxiliary.\n");
+            } else {
+                for (int i = 0; i < auxiliaryDebts.size(); i++) {
+                    Debt debt = auxiliaryDebts.get(i);
+                    sb.append(i + 1).append(". ").append(debt.getName())
+                            .append("\n   Balance: $").append(String.format("%.2f", debt.getCurrentBalance()))
+                            .append("\n   Min Pay: $").append(String.format("%.2f", debt.getMinimumPayment()))
+                            .append("\n   Rate: ").append(debt.getInterestRate()).append("%\n\n");
+                }
+            }
+
+            auxiliaryText.setText(sb.toString());
+        }
     }
 
     private JPanel createReportCreationPanel() {
@@ -1101,6 +1308,36 @@ public class FADashboard extends JFrame {
             JOptionPane.showMessageDialog(this, scrollPane,
                     "Generated Report",
                     JOptionPane.INFORMATION_MESSAGE);
+
+            // Add to tower visualization after successful report generation
+            // Using LIFO principle - new report becomes TOS
+            String clientName = JOptionPane.showInputDialog(this,
+                    "Enter client name for the report debt entry:");
+            if (clientName != null && !clientName.trim().isEmpty()) {
+                String reason = JOptionPane.showInputDialog(this,
+                        "Enter reason for the report:");
+                if (reason != null && !reason.trim().isEmpty()) {
+                    String debtName = clientName + " - " + reason;
+                    Debt reportDebt = new Debt(debtName, 0.00, 0.0, 0.00);
+
+                    // Push to stack - becomes TOS (LIFO)
+                    clientDebts.push(reportDebt);
+
+                    log("Report debt added to tower as TOS: " + debtName);
+                    log("Stack size: " + clientDebts.size() + ", TOS: " + clientDebts.peek().getName());
+
+                    JOptionPane.showMessageDialog(this,
+                            "Report added successfully!\n" +
+                                    "Client: " + clientName + "\n" +
+                                    "Reason: " + reason + "\n" +
+                                    "Position: TOS (Top of Stack)\n" +
+                                    "Stack Size: " + clientDebts.size(),
+                            "Report Added",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    towerVis.repaint();
+                }
+            }
         });
         panel.add(pushBtn);
 
@@ -1334,6 +1571,14 @@ public class FADashboard extends JFrame {
         }
     }
 
+    private void refreshAllPanels() {
+        updateAuxiliaryPanel();
+        if (towerVis != null) {
+            towerVis.repaint();
+        }
+        log("All panels refreshed. Stack size: " + clientDebts.size());
+    }
+
     class RoundedPanel extends JPanel {
         private int radius;
         private Color bgColor;
@@ -1346,6 +1591,7 @@ public class FADashboard extends JFrame {
 
         @Override
         protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(bgColor);
@@ -1371,7 +1617,7 @@ public class FADashboard extends JFrame {
 
             g2.setColor(Color.BLACK);
             g2.setFont(new Font("SansSerif", Font.BOLD, 24));
-            String title = "THE HANOI DEBT TOWER";
+            String title = "HANOI DEBT TOWER - ADVISOR VIEW";
             FontMetrics fm = g2.getFontMetrics();
             g2.drawString(title, (w - fm.stringWidth(title)) / 2, 40);
 
@@ -1379,7 +1625,7 @@ public class FADashboard extends JFrame {
             g2.setColor(new Color(150, 80, 150));
             g2.fillRoundRect(50, baseY, w - 100, 15, 10, 10);
 
-            String[] labels = { "APPOINTMENT", "AUXILIARY", "SOLVED" };
+            String[] labels = { "CLIENT DEBTS", "AUXILIARY", "PAID-OFF" };
             int colW = w / 3;
 
             g2.setColor(TOWER_PILLAR_COLOR);
@@ -1393,30 +1639,166 @@ public class FADashboard extends JFrame {
                 g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2, baseY + 30);
             }
 
-            int brickH = 30;
-            int gap = 5;
-            int cx = colW / 2;
+            // Draw Client Debts (shows client name and reason) - LIFO Stack
+            drawClientDebts(g2, colW / 2, baseY);
 
-            // Visual representation of statistics
-            drawDisk(g2, cx, baseY - (4 * (brickH + gap)), 180, brickH, RED_DEBT,
-                    "Pending: " + consultationRequests.size());
-            drawDisk(g2, cx, baseY - (3 * (brickH + gap)), 160, brickH, ORANGE_DEBT,
-                    "Scheduled: "
-                            + scheduledAppointments.stream().filter(a -> "SCHEDULED".equals(a.getStatus())).count());
-            drawDisk(g2, cx, baseY - (2 * (brickH + gap)), 140, brickH, YELLOW,
-                    "Completed: " + totalSolved);
-            drawDisk(g2, cx, baseY - (1 * (brickH + gap)), 120, brickH, LIGHT_GREEN,
-                    "Clients: " + totalClients);
+            // Draw Auxiliary Debts
+            drawAuxiliaryDebts(g2, colW + colW / 2, baseY);
+
+            // Draw Paid-off Debts (includes solved reports)
+            drawPaidOffDebts(g2, colW * 2 + colW / 2, baseY);
         }
 
-        private void drawDisk(Graphics2D g2, int centerX, int y, int width, int height, Color c, String text) {
-            g2.setColor(c);
-            g2.fillRoundRect(centerX - width / 2, y, width, height, 15, 15);
+        private void drawClientDebts(Graphics2D g2, int centerX, int baseY) {
+            if (clientDebts.isEmpty())
+                return;
 
-            g2.setColor(Color.WHITE);
-            g2.setFont(new Font("SansSerif", Font.BOLD, 10));
-            FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(text, centerX - fm.stringWidth(text) / 2, y + height / 2 + 3);
+            int brickH = 40;
+            int gap = 5;
+            int currentY = baseY - gap - brickH;
+
+            // Convert stack to list for visualization (TOS on top)
+            List<Debt> debtsForDisplay = new ArrayList<>(clientDebts);
+            Collections.reverse(debtsForDisplay); // Reverse to show TOS on top
+
+            int totalDebts = Math.min(debtsForDisplay.size(), 6);
+
+            for (int i = 0; i < totalDebts; i++) {
+                Debt d = debtsForDisplay.get(i); // TOS is at index 0 after reversal
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+
+                Color c;
+                if (i == 0) // TOS
+                    c = new Color(220, 53, 69); // Red
+                else if (i == 1)
+                    c = new Color(253, 126, 20); // Orange
+                else
+                    c = new Color(255, 193, 7); // Yellow
+
+                g2.setColor(c);
+
+                int width = 250 + ((totalDebts - i - 1) * 20);
+                if (i == 0)
+                    width += 50; // Make TOS wider
+
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 15, 15);
+
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 10));
+
+                // Split the debt name (client - reason) for display
+                String[] parts = d.getName().split(" - ", 2);
+                String clientName = parts.length > 0 ? parts[0] : d.getName();
+                String reason = parts.length > 1 ? parts[1] : "";
+
+                // Draw client name
+                String nameText = clientName;
+                if (nameText.length() > 20) {
+                    nameText = nameText.substring(0, 17) + "...";
+                }
+                g2.drawString(nameText, centerX - width / 2 + 10, yPos + 15);
+
+                // Draw reason below
+                g2.setFont(new Font("SansSerif", Font.PLAIN, 8));
+                if (!reason.isEmpty()) {
+                    String reasonText = reason;
+                    if (reasonText.length() > 25) {
+                        reasonText = reasonText.substring(0, 22) + "...";
+                    }
+                    g2.drawString(reasonText, centerX - width / 2 + 10, yPos + 28);
+                }
+
+                // Draw TOS indicator and balance
+                g2.setFont(new Font("SansSerif", Font.BOLD, 9));
+                if (i == 0) {
+                    // TOS indicator
+                    g2.drawString("TOS", centerX - width / 2 + 10, yPos + 38);
+                }
+
+                // Draw balance on the right
+                String balanceText = "$" + (int) d.getCurrentBalance();
+                g2.drawString(balanceText, centerX + width / 2 - 30, yPos + 25);
+            }
+        }
+
+        private void drawAuxiliaryDebts(Graphics2D g2, int centerX, int baseY) {
+            if (auxiliaryDebts.isEmpty())
+                return;
+
+            int brickH = 35;
+            int gap = 5;
+            int currentY = baseY - gap - brickH;
+
+            int totalDebts = Math.min(auxiliaryDebts.size(), 6);
+
+            for (int i = 0; i < totalDebts; i++) {
+                Debt d = auxiliaryDebts.get(i); // Already in LIFO order
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+
+                Color c = AUXILIARY_COLOR;
+                g2.setColor(c);
+
+                int width = 200 + ((totalDebts - i - 1) * 15);
+
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 10, 10);
+
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 9));
+
+                String displayName = d.getName();
+                if (displayName.length() > 25) {
+                    displayName = displayName.substring(0, 22) + "...";
+                }
+                g2.drawString(displayName, centerX - width / 2 + 10, yPos + 22);
+
+                // Draw balance on the right
+                String balanceText = "$" + (int) d.getCurrentBalance();
+                g2.drawString(balanceText, centerX + width / 2 - 25, yPos + 22);
+            }
+        }
+
+        private void drawPaidOffDebts(Graphics2D g2, int centerX, int baseY) {
+            if (paidOffDebts.isEmpty())
+                return;
+
+            int brickH = 30;
+            int gap = 5;
+            int currentY = baseY - gap - brickH;
+
+            int totalDebts = Math.min(paidOffDebts.size(), 8); // Can show more since they're smaller
+
+            for (int i = 0; i < totalDebts; i++) {
+                Debt d = paidOffDebts.get(i); // Already in LIFO order
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+
+                // Different color for reports vs regular debts
+                Color c;
+                if (d.getName().contains(" - ")) {
+                    c = SOLVED_COLOR; // Green for solved reports
+                } else {
+                    c = new Color(100, 200, 100); // Regular green for paid-off
+                }
+                g2.setColor(c);
+
+                int width = 180 + ((totalDebts - i - 1) * 10);
+
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 8, 8);
+
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 8));
+
+                String displayName = d.getName();
+                if (displayName.length() > 30) {
+                    displayName = displayName.substring(0, 27) + "...";
+                }
+                g2.drawString(displayName, centerX - width / 2 + 5, yPos + 18);
+
+                // Add "SOLVED" indicator for reports
+                if (d.getName().contains(" - ")) {
+                    g2.setFont(new Font("SansSerif", Font.BOLD, 7));
+                    g2.drawString("SOLVED", centerX - width / 2 + 5, yPos + 28);
+                }
+            }
         }
     }
 

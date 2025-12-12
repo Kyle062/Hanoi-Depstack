@@ -14,13 +14,6 @@ public class AppController {
         // Load existing users from file
         users = DataManager.loadUsers();
 
-        // Pre-register admin advisor if not exists
-        if (!users.containsKey("admin")) {
-            users.put("admin", new User("Admin Advisor", "admin@hanoi.com", "admin", "password123", "ADVISOR"));
-            DataManager.saveUsers(users);
-            System.out.println("Admin advisor created.");
-        }
-
         // Pre-register a test financial advisor if not exists
         if (!users.containsKey("advisor1")) {
             users.put("advisor1", new User("John Financial", "john@hanoi.com", "advisor1", "password123", "ADVISOR"));
