@@ -54,9 +54,9 @@ public class UserDashboard extends JFrame {
     private JProgressBar progressBar;
     private JLabel tosLabel;
 
-    // Data lists for visualization
-    private List<Debt> auxiliaryDebts = new ArrayList<>();
-    private List<Debt> paidOffDebts = new ArrayList<>();
+    // Data lists for visualization - Using Stack for LIFO
+    private java.util.Stack<Debt> auxiliaryDebts = new java.util.Stack<>();
+    private java.util.Stack<Debt> paidOffDebts = new java.util.Stack<>();
 
     // Date formatter for event calendar
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d");
@@ -74,7 +74,6 @@ public class UserDashboard extends JFrame {
         refreshAll();
         setVisible(true);
 
-        // Add window listener to save data on close
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -166,7 +165,6 @@ public class UserDashboard extends JFrame {
             controller.logout();
             dispose();
 
-            // Return to login screen
             SwingUtilities.invokeLater(() -> {
                 new Login(controller).setVisible(true);
             });
@@ -211,7 +209,6 @@ public class UserDashboard extends JFrame {
     }
 
     private void createLogsPanel() {
-        // Logs go below the bottom row
         JPanel logContainer = new JPanel(new BorderLayout());
         logContainer.setOpaque(false);
         logContainer.setBounds(0, 870, 2000, 150);
@@ -430,7 +427,8 @@ public class UserDashboard extends JFrame {
         try {
             List<Debt> activeDebts = manager.getStackForVisualization();
             if (activeDebts != null && !activeDebts.isEmpty()) {
-                Debt topDebt = activeDebts.get(activeDebts.size() - 1); // Get TOS (LIFO - last element)
+                // In LIFO, TOS is the last element added (index 0 in stack visualization)
+                Debt topDebt = activeDebts.get(0); // TOS is first element in list for visualization
 
                 cardTitleLabel.setText("Debt Details - TOS");
                 posLabel.setText("Position: TOS (Stack Size: " + activeDebts.size() + ")");
@@ -620,13 +618,14 @@ public class UserDashboard extends JFrame {
 
                 if (top.isPaidOff()) {
                     Debt paidOffDebt = controller.getManager().popDebt();
-                    paidOffDebts.add(0, paidOffDebt);
+                    paidOffDebts.push(paidOffDebt); // Push to paid-off stack (LIFO)
                     log("COMPLETED: " + top.getName() + " is now paid off and moved to paid-off!");
                     addEventToCalendar(top.getName() + " has been successfully paid off!");
 
+                    // If active stack is empty and auxiliary has debts, move one to active
                     if (controller.getManager().peekTOS() == null && !auxiliaryDebts.isEmpty()) {
-                        Debt newActive = auxiliaryDebts.remove(0);
-                        controller.getManager().pushDebt(newActive);
+                        Debt newActive = auxiliaryDebts.pop(); // Pop from auxiliary (LIFO)
+                        controller.getManager().pushDebt(newActive); // Push to active (becomes TOS)
                         log("MOVED: " + newActive.getName() + " from auxiliary to active as TOS (LIFO)");
                     }
                 }
@@ -665,7 +664,7 @@ public class UserDashboard extends JFrame {
         Debt d = controller.getManager().peekTOS();
         if (d != null) {
             List<Debt> activeDebts = manager.getStackForVisualization();
-            int position = activeDebts.indexOf(d) + 1;
+            int position = 1; // TOS is always position 1 in LIFO
             int total = activeDebts.size();
 
             JOptionPane.showMessageDialog(this,
@@ -694,8 +693,13 @@ public class UserDashboard extends JFrame {
 
             if (confirm == JOptionPane.YES_OPTION) {
                 Debt movedDebt = controller.getManager().popDebt();
-                auxiliaryDebts.add(0, movedDebt);
+                auxiliaryDebts.push(movedDebt); // Push to auxiliary stack (LIFO)
                 log("MOVED: " + movedDebt.getName() + " from TOS to auxiliary (LIFO)");
+
+                // Update TOS label
+                Debt newTOS = controller.getManager().peekTOS();
+                tosLabel.setText("Current TOS: " + (newTOS != null ? newTOS.getName() + " (Position: TOS)" : "None"));
+
                 refreshAll();
             }
         } else {
@@ -721,6 +725,11 @@ public class UserDashboard extends JFrame {
                 log("DELETED: " + top.getName() + " from TOS (Balance: $"
                         + String.format("%.2f", top.getCurrentBalance())
                         + ")");
+
+                // Update TOS label
+                Debt newTOS = controller.getManager().peekTOS();
+                tosLabel.setText("Current TOS: " + (newTOS != null ? newTOS.getName() + " (Position: TOS)" : "None"));
+
                 refreshAll();
             }
         } else {
@@ -766,7 +775,6 @@ public class UserDashboard extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Update the consultation dialog method in UserDashboard.java
     private void showConsultationDialog(Component parentComponent) {
         JPanel formPanel = new JPanel(new GridLayout(5, 2, 5, 10));
 
@@ -775,7 +783,6 @@ public class UserDashboard extends JFrame {
 
         JLabel advisorLabel = new JLabel("Choose Financial Advisor:");
 
-        // Get all financial advisors
         List<User> advisors = DataManager.getFinancialAdvisors();
         String[] advisorOptions;
 
@@ -824,7 +831,6 @@ public class UserDashboard extends JFrame {
             String platform = (String) platformComboBox.getSelectedItem();
             String date = dateField.getText().trim();
 
-            // Validate inputs
             if (reason.isEmpty()) {
                 JOptionPane.showMessageDialog(parentComponent,
                         "Please enter a reason for consultation.",
@@ -839,7 +845,6 @@ public class UserDashboard extends JFrame {
                 return;
             }
 
-            // Validate date format (simple check)
             if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
                 JOptionPane.showMessageDialog(parentComponent,
                         "Please enter date in YYYY-MM-DD format.",
@@ -847,18 +852,15 @@ public class UserDashboard extends JFrame {
                 return;
             }
 
-            // Parse advisor information
             String advisorUsername = advisorSelection.substring(advisorSelection.lastIndexOf('(') + 1,
                     advisorSelection.lastIndexOf(')'));
 
-            // Create consultation request
             ConsultationRequest request = new ConsultationRequest(
                     controller.getCurrentUsername(),
                     controller.getCurrentUser().getFullName(),
                     reason,
                     date + " " + platform);
 
-            // Save the request
             DataManager.addConsultationRequest(request);
 
             System.out.println("--- Consultation Request Submitted ---");
@@ -943,47 +945,36 @@ public class UserDashboard extends JFrame {
             }
 
             // Draw stacks with proper LIFO visualization (TOS on top)
-            drawStack(g2, manager.getStackForVisualization(), colW / 2, baseY);
-            drawStack(g2, auxiliaryDebts, colW + colW / 2, baseY);
-            drawStack(g2, paidOffDebts, colW * 2 + colW / 2, baseY);
+            drawActiveStack(g2, colW / 2, baseY);
+            drawAuxiliaryStack(g2, colW + colW / 2, baseY);
+            drawPaidOffStack(g2, colW * 2 + colW / 2, baseY);
         }
 
-        private void drawStack(Graphics2D g2, List<Debt> debts, int centerX, int baseY) {
+        private void drawActiveStack(Graphics2D g2, int centerX, int baseY) {
+            List<Debt> debts = manager.getStackForVisualization();
             if (debts == null || debts.isEmpty())
                 return;
 
             int brickH = 40;
             int gap = 5;
-            int currentY = baseY - gap - brickH;
 
-            int totalDebts = Math.min(debts.size(), 6);
-
-            for (int i = 0; i < totalDebts; i++) {
-                // For LIFO: last element is TOS (on top), first element is bottom
-                int debtIndex;
-                if (centerX == getWidth() / 6) { // Active debts - reverse for proper TOS display
-                    debtIndex = debts.size() - 1 - i;
-                } else { // Auxiliary and paid-off - already in LIFO order
-                    debtIndex = i;
-                }
-
-                Debt d = debts.get(debtIndex);
+            // Draw in LIFO order: TOS (first in list) on top
+            for (int i = 0; i < Math.min(debts.size(), 6); i++) {
+                Debt d = debts.get(i); // Index 0 is TOS in LIFO visualization
                 int yPos = baseY - gap - brickH - (i * (brickH + gap));
 
                 Color c;
-                if (i == 0 && centerX == getWidth() / 6) // TOS for active debts
+                if (i == 0) // TOS
                     c = new Color(220, 53, 69); // Red
-                else if (i == 1 && centerX == getWidth() / 6)
+                else if (i == 1) // Second from top
                     c = new Color(253, 126, 20); // Orange
-                else if (centerX > getWidth() / 2 + 100) // Paid-off
-                    c = new Color(100, 200, 100); // Green
-                else // Auxiliary or other active debts
-                    c = new Color(150, 150, 200); // Blue
+                else // Other debts
+                    c = new Color(255, 193, 7); // Yellow
 
                 g2.setColor(c);
 
-                int width = 250 + ((totalDebts - i - 1) * 20);
-                if (i == 0 && centerX == getWidth() / 6) // Make TOS wider
+                int width = 250 + ((debts.size() - i - 1) * 20);
+                if (i == 0) // Make TOS wider
                     width += 50;
 
                 g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 15, 15);
@@ -1000,11 +991,81 @@ public class UserDashboard extends JFrame {
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(info, centerX - fm.stringWidth(info) / 2, yPos + 25);
 
-                // Add TOS indicator for active debts
-                if (i == 0 && centerX == getWidth() / 6) {
+                // Add TOS indicator for TOS
+                if (i == 0) {
                     g2.setFont(new Font("SansSerif", Font.BOLD, 9));
                     g2.drawString("TOS", centerX - width / 2 + 10, yPos + 38);
                 }
+            }
+        }
+
+        private void drawAuxiliaryStack(Graphics2D g2, int centerX, int baseY) {
+            if (auxiliaryDebts.isEmpty())
+                return;
+
+            int brickH = 35;
+            int gap = 5;
+
+            // Convert Stack to array for easier access
+            Debt[] debtsArray = auxiliaryDebts.toArray(new Debt[0]);
+
+            for (int i = 0; i < Math.min(debtsArray.length, 6); i++) {
+                Debt d = debtsArray[i]; // Index 0 is TOS (most recently moved)
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+
+                Color c = new Color(150, 150, 200); // Blue for auxiliary
+                g2.setColor(c);
+
+                int width = 200 + ((debtsArray.length - i - 1) * 15);
+
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 10, 10);
+
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 9));
+                String info = d.getName() + " $" + (int) d.getCurrentBalance();
+
+                if (info.length() > 25) {
+                    info = info.substring(0, 22) + "...";
+                }
+
+                g2.drawString(info, centerX - width / 2 + 10, yPos + 22);
+            }
+        }
+
+        private void drawPaidOffStack(Graphics2D g2, int centerX, int baseY) {
+            if (paidOffDebts.isEmpty())
+                return;
+
+            int brickH = 30;
+            int gap = 5;
+
+            // Convert Stack to array for easier access
+            Debt[] debtsArray = paidOffDebts.toArray(new Debt[0]);
+
+            for (int i = 0; i < Math.min(debtsArray.length, 8); i++) {
+                Debt d = debtsArray[i]; // Index 0 is most recently paid off
+                int yPos = baseY - gap - brickH - (i * (brickH + gap));
+
+                Color c = new Color(100, 200, 100); // Green for paid-off
+                g2.setColor(c);
+
+                int width = 180 + ((debtsArray.length - i - 1) * 10);
+
+                g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 8, 8);
+
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 8));
+                String info = d.getName();
+
+                if (info.length() > 30) {
+                    info = info.substring(0, 27) + "...";
+                }
+
+                g2.drawString(info, centerX - width / 2 + 5, yPos + 18);
+
+                // Add "PAID" indicator
+                g2.setFont(new Font("SansSerif", Font.BOLD, 7));
+                g2.drawString("PAID", centerX - width / 2 + 5, yPos + 28);
             }
         }
     }

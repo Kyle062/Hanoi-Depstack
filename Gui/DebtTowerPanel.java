@@ -33,20 +33,28 @@ public class DebtTowerPanel extends JPanel {
         double max = manager.getMaxDebtAmount();
         int y = h - 50;
 
+        // Draw debts in LIFO order (TOS on top)
         for (int i = 0; i < debts.size(); i++) {
+            // For LIFO: i=0 is TOS (top of stack)
             Debt d = debts.get(i);
-            boolean isTop = (i == debts.size() - 1);
+            boolean isTop = (i == 0); // First element is TOS in LIFO
 
             int blockW = Math.max(150, (int) ((d.getCurrentBalance() / max) * (w - 80)));
             int x = (w - blockW) / 2;
 
-            // Colors: Red for Top, Orange/Yellow for others
+            // Colors: Red for Top (TOS), Orange/Yellow for others
             g2.setColor(isTop ? new Color(220, 53, 69) : new Color(253, 126, 20));
             g2.fillRoundRect(x, y, blockW, 40, 10, 10);
 
             g2.setColor(Color.WHITE);
             g2.setFont(new Font("SansSerif", Font.BOLD, 12));
-            g2.drawString(d.getName() + " ($" + (int) d.getCurrentBalance() + ")", x + 15, y + 25);
+
+            // Add TOS indicator
+            String displayText = d.getName() + " ($" + (int) d.getCurrentBalance() + ")";
+            if (isTop) {
+                displayText = "TOS: " + displayText;
+            }
+            g2.drawString(displayText, x + 15, y + 25);
 
             y -= 45;
         }
