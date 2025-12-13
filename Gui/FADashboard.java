@@ -267,7 +267,7 @@ public class FADashboard extends JFrame {
         // Tower Visualization - Adjust these values to change position and size
         int towerX = 180;
         int towerY = 30;
-        int towerWidth = 900; // Reduced width to make room for right panel
+        int towerWidth = 1300; // Reduced width to make room for right panel
         int towerHeight = 620;
 
         towerContainer = new RoundedPanel(20, Color.WHITE);
@@ -280,8 +280,8 @@ public class FADashboard extends JFrame {
 
         // Logs Panel - Adjust these values to change position and size
         int logsX = 180;
-        int logsY = 670;
-        int logsWidth = 900; // Reduced width to match tower
+        int logsY = 830;
+        int logsWidth = 1300;
         int logsHeight = 150;
 
         JPanel logContainer = new JPanel(new BorderLayout());
@@ -320,8 +320,8 @@ public class FADashboard extends JFrame {
     private void createAnalyticsPanel() {
         // Position analytics panel below logs panel
         int analyticsX = 180;
-        int analyticsY = 830; // Below logs (670 + 150 + 10)
-        int analyticsWidth = 900;
+        int analyticsY = 670;
+        int analyticsWidth = 1300;
         int analyticsHeight = 120;
 
         analyticsPanel = new RoundedPanel(15, new Color(40, 40, 40, 200));
@@ -383,10 +383,10 @@ public class FADashboard extends JFrame {
 
     private void createRightSidePanel() {
         // Right side panel - positioned to the right of tower
-        int rightPanelX = 1100; // 180 + 900 + 20
+        int rightPanelX = 1500; // 180 + 900 + 20
         int rightPanelY = 30;
         int rightPanelWidth = 400;
-        int rightPanelHeight = 920; // 30 + 620 + 270 (analytics height)
+        int rightPanelHeight = 500; // 30 + 620 + 270 (analytics height)
 
         rightSidePanel = new RoundedPanel(20, Color.WHITE);
         rightSidePanel.setBounds(rightPanelX, rightPanelY, rightPanelWidth, rightPanelHeight);
@@ -402,7 +402,7 @@ public class FADashboard extends JFrame {
         createReportPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel createReportTitle = new JLabel("Create Report Manually");
-        createReportTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
+        createReportTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
         createReportTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         createReportPanel.add(createReportTitle);
         createReportPanel.add(Box.createVerticalStrut(10));
