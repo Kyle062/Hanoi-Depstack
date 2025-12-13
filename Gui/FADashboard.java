@@ -329,27 +329,27 @@ public class FADashboard extends JFrame {
         analyticsPanel.setLayout(new GridLayout(1, 4, 10, 0));
         analyticsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Create four statistic panels
-        JPanel totalReportsPanel = createStatPanel("Total Reports",
+        // Create the stat panels and store references to the value labels
+        StatPanelData totalReportsData = createStatPanelWithData("Total Reports",
                 String.valueOf(clientDebts.size() + auxiliaryDebts.size() + paidOffDebts.size()),
                 new Color(52, 152, 219));
-        totalReportsLabel = (JLabel) totalReportsPanel.getComponent(1);
+        totalReportsLabel = totalReportsData.valueLabel;
+        analyticsPanel.add(totalReportsData.panel);
 
-        JPanel solvedReportsPanel = createStatPanel("Solved Reports", String.valueOf(paidOffDebts.size()),
-                new Color(46, 204, 113));
-        solvedReportsLabel = (JLabel) solvedReportsPanel.getComponent(1);
+        StatPanelData solvedReportsData = createStatPanelWithData("Solved Reports",
+                String.valueOf(paidOffDebts.size()), new Color(46, 204, 113));
+        solvedReportsLabel = solvedReportsData.valueLabel;
+        analyticsPanel.add(solvedReportsData.panel);
 
-        JPanel totalAppointmentsPanel = createStatPanel("Appointments", "0", new Color(155, 89, 182));
-        totalAppointmentsLabel = (JLabel) totalAppointmentsPanel.getComponent(1);
+        StatPanelData totalAppointmentsData = createStatPanelWithData("Appointments", "0",
+                new Color(155, 89, 182));
+        totalAppointmentsLabel = totalAppointmentsData.valueLabel;
+        analyticsPanel.add(totalAppointmentsData.panel);
 
-        JPanel totalClientsPanel = createStatPanel("Active Clients", String.valueOf(getUniqueClientCount()),
-                new Color(241, 196, 15));
-        totalClientsLabel = (JLabel) totalClientsPanel.getComponent(1);
-
-        analyticsPanel.add(totalReportsPanel);
-        analyticsPanel.add(solvedReportsPanel);
-        analyticsPanel.add(totalAppointmentsPanel);
-        analyticsPanel.add(totalClientsPanel);
+        StatPanelData totalClientsData = createStatPanelWithData("Active Clients",
+                String.valueOf(getUniqueClientCount()), new Color(241, 196, 15));
+        totalClientsLabel = totalClientsData.valueLabel;
+        analyticsPanel.add(totalClientsData.panel);
 
         mainLayer.add(analyticsPanel);
 
@@ -357,7 +357,8 @@ public class FADashboard extends JFrame {
         updateAnalytics();
     }
 
-    private JPanel createStatPanel(String title, String value, Color color) {
+    // Helper class to return both panel and label reference
+    private StatPanelData createStatPanelWithData(String title, String value, Color color) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
@@ -378,7 +379,18 @@ public class FADashboard extends JFrame {
         panel.add(valueLabel);
         panel.add(Box.createVerticalStrut(5));
 
-        return panel;
+        return new StatPanelData(panel, valueLabel);
+    }
+
+    // Simple data class to hold panel and label reference
+    private class StatPanelData {
+        JPanel panel;
+        JLabel valueLabel;
+
+        StatPanelData(JPanel panel, JLabel valueLabel) {
+            this.panel = panel;
+            this.valueLabel = valueLabel;
+        }
     }
 
     private void createRightSidePanel() {
