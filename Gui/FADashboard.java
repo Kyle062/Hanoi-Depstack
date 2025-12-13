@@ -26,6 +26,22 @@ public class FADashboard extends JFrame {
     private JTextArea logsArea;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm");
 
+    // New components for analytics and right panel
+    private JPanel analyticsPanel;
+    private JPanel rightSidePanel;
+    private JLabel totalReportsLabel;
+    private JLabel solvedReportsLabel;
+    private JLabel totalAppointmentsLabel;
+    private JLabel totalClientsLabel;
+    private JTextArea appointmentScheduleArea;
+
+    // Manual report fields
+    private JTextField reportClientNameField;
+    private JTextField reportTypeField;
+    private JTextField reportAmountField;
+    private JTextField reportInterestField;
+    private JTextField reportMinPaymentField;
+
     public FADashboard(AppController controller) {
         this.controller = controller;
 
@@ -67,11 +83,16 @@ public class FADashboard extends JFrame {
 
         mainLayer = new JPanel(null);
         mainLayer.setOpaque(false);
-        mainLayer.setBounds(0, 0, 1500, 900);
+        mainLayer.setBounds(0, 0, 1920, 1080);
         layeredPane.add(mainLayer, JLayeredPane.PALETTE_LAYER);
 
         createSidebar();
         createMainContent();
+        createAnalyticsPanel(); // New analytics panel
+        createRightSidePanel(); // New right-side panel
+
+        // Load appointments for display
+        loadAppointmentSchedule();
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -110,7 +131,7 @@ public class FADashboard extends JFrame {
             backgroundLabel = new JLabel();
             backgroundLabel.setOpaque(true);
             backgroundLabel.setBackground(new Color(60, 40, 30));
-            backgroundLabel.setBounds(0, 0, 1920, 900);
+            backgroundLabel.setBounds(0, 0, 1920, 1080);
         }
         layeredPane.add(backgroundLabel, JLayeredPane.DEFAULT_LAYER);
     }
@@ -246,7 +267,7 @@ public class FADashboard extends JFrame {
         // Tower Visualization - Adjust these values to change position and size
         int towerX = 180;
         int towerY = 30;
-        int towerWidth = 1100;
+        int towerWidth = 900; // Reduced width to make room for right panel
         int towerHeight = 620;
 
         towerContainer = new RoundedPanel(20, Color.WHITE);
@@ -260,8 +281,8 @@ public class FADashboard extends JFrame {
         // Logs Panel - Adjust these values to change position and size
         int logsX = 180;
         int logsY = 670;
-        int logsWidth = 1100;
-        int logsHeight = 200;
+        int logsWidth = 900; // Reduced width to match tower
+        int logsHeight = 150;
 
         JPanel logContainer = new JPanel(new BorderLayout());
         logContainer.setBackground(Color.BLACK);
@@ -296,10 +317,373 @@ public class FADashboard extends JFrame {
         log("Current time: " + new Date());
     }
 
+    private void createAnalyticsPanel() {
+        // Position analytics panel below logs panel
+        int analyticsX = 180;
+        int analyticsY = 830; // Below logs (670 + 150 + 10)
+        int analyticsWidth = 900;
+        int analyticsHeight = 120;
+
+        analyticsPanel = new RoundedPanel(15, new Color(40, 40, 40, 200));
+        analyticsPanel.setBounds(analyticsX, analyticsY, analyticsWidth, analyticsHeight);
+        analyticsPanel.setLayout(new GridLayout(1, 4, 10, 0));
+        analyticsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Create four statistic panels
+        JPanel totalReportsPanel = createStatPanel("Total Reports",
+                String.valueOf(clientDebts.size() + auxiliaryDebts.size() + paidOffDebts.size()),
+                new Color(52, 152, 219));
+        totalReportsLabel = (JLabel) totalReportsPanel.getComponent(1);
+
+        JPanel solvedReportsPanel = createStatPanel("Solved Reports", String.valueOf(paidOffDebts.size()),
+                new Color(46, 204, 113));
+        solvedReportsLabel = (JLabel) solvedReportsPanel.getComponent(1);
+
+        JPanel totalAppointmentsPanel = createStatPanel("Appointments", "0", new Color(155, 89, 182));
+        totalAppointmentsLabel = (JLabel) totalAppointmentsPanel.getComponent(1);
+
+        JPanel totalClientsPanel = createStatPanel("Active Clients", String.valueOf(getUniqueClientCount()),
+                new Color(241, 196, 15));
+        totalClientsLabel = (JLabel) totalClientsPanel.getComponent(1);
+
+        analyticsPanel.add(totalReportsPanel);
+        analyticsPanel.add(solvedReportsPanel);
+        analyticsPanel.add(totalAppointmentsPanel);
+        analyticsPanel.add(totalClientsPanel);
+
+        mainLayer.add(analyticsPanel);
+
+        // Update appointment count
+        updateAnalytics();
+    }
+
+    private JPanel createStatPanel(String title, String value, Color color) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setForeground(color);
+        valueLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(valueLabel);
+        panel.add(Box.createVerticalStrut(5));
+
+        return panel;
+    }
+
+    private void createRightSidePanel() {
+        // Right side panel - positioned to the right of tower
+        int rightPanelX = 1100; // 180 + 900 + 20
+        int rightPanelY = 30;
+        int rightPanelWidth = 400;
+        int rightPanelHeight = 920; // 30 + 620 + 270 (analytics height)
+
+        rightSidePanel = new RoundedPanel(20, Color.WHITE);
+        rightSidePanel.setBounds(rightPanelX, rightPanelY, rightPanelWidth, rightPanelHeight);
+        rightSidePanel.setLayout(new BorderLayout(0, 10));
+
+        // Create tabbed pane for right panel
+        JTabbedPane rightTabs = new JTabbedPane();
+        rightTabs.setFont(new Font("SansSerif", Font.BOLD, 12));
+
+        // Tab 1: Manual Report Creation
+        JPanel createReportPanel = new JPanel();
+        createReportPanel.setLayout(new BoxLayout(createReportPanel, BoxLayout.Y_AXIS));
+        createReportPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel createReportTitle = new JLabel("Create Report Manually");
+        createReportTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
+        createReportTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        createReportPanel.add(createReportTitle);
+        createReportPanel.add(Box.createVerticalStrut(10));
+
+        // Form fields for manual report creation
+        JPanel formPanel = new JPanel();
+        formPanel.setLayout(new GridLayout(0, 1, 5, 5));
+
+        // Client Name
+        JPanel clientNamePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JLabel clientNameLabel = new JLabel("Client Name:");
+        clientNameLabel.setPreferredSize(new Dimension(120, 25));
+        reportClientNameField = new JTextField(20);
+        clientNamePanel.add(clientNameLabel);
+        clientNamePanel.add(reportClientNameField);
+        formPanel.add(clientNamePanel);
+
+        // Report Type
+        JPanel reportTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JLabel reportTypeLabel = new JLabel("Report Type:");
+        reportTypeLabel.setPreferredSize(new Dimension(120, 25));
+        reportTypeField = new JTextField(20);
+        reportTypePanel.add(reportTypeLabel);
+        reportTypePanel.add(reportTypeField);
+        formPanel.add(reportTypePanel);
+
+        // Amount
+        JPanel amountPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JLabel amountLabel = new JLabel("Amount ($):");
+        amountLabel.setPreferredSize(new Dimension(120, 25));
+        reportAmountField = new JTextField(20);
+        amountPanel.add(amountLabel);
+        amountPanel.add(reportAmountField);
+        formPanel.add(amountPanel);
+
+        // Interest Rate
+        JPanel interestPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JLabel interestLabel = new JLabel("Interest Rate (%):");
+        interestLabel.setPreferredSize(new Dimension(120, 25));
+        reportInterestField = new JTextField(20);
+        interestPanel.add(interestLabel);
+        interestPanel.add(reportInterestField);
+        formPanel.add(interestPanel);
+
+        // Minimum Payment
+        JPanel minPaymentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        JLabel minPaymentLabel = new JLabel("Min Payment ($):");
+        minPaymentLabel.setPreferredSize(new Dimension(120, 25));
+        reportMinPaymentField = new JTextField(20);
+        minPaymentPanel.add(minPaymentLabel);
+        minPaymentPanel.add(reportMinPaymentField);
+        formPanel.add(minPaymentPanel);
+
+        createReportPanel.add(formPanel);
+        createReportPanel.add(Box.createVerticalStrut(10));
+
+        // Create Report Button
+        JButton createReportButton = new JButton("Create Report");
+        createReportButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        createReportButton.setBackground(new Color(46, 204, 113));
+        createReportButton.setForeground(Color.WHITE);
+        createReportButton.setFocusPainted(false);
+        createReportButton.setBorderPainted(false);
+        createReportButton.setFont(new Font("SansSerif", Font.BOLD, 14));
+        createReportButton.setPreferredSize(new Dimension(200, 40));
+        createReportButton.addActionListener(e -> createManualReport());
+
+        createReportPanel.add(createReportButton);
+        createReportPanel.add(Box.createVerticalStrut(10));
+
+        // Info label
+        JLabel infoLabel = new JLabel(
+                "<html><center>Report will be added to the<br>top of the client debt stack (TOS)</center></html>");
+        infoLabel.setForeground(Color.GRAY);
+        infoLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        createReportPanel.add(infoLabel);
+
+        JScrollPane createReportScroll = new JScrollPane(createReportPanel);
+        rightTabs.addTab("Create Report", createReportScroll);
+
+        // Tab 2: Appointment Schedule
+        JPanel appointmentPanel = new JPanel(new BorderLayout());
+        appointmentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel appointmentTitle = new JLabel("Appointment Schedule");
+        appointmentTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
+        appointmentTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        appointmentPanel.add(appointmentTitle, BorderLayout.NORTH);
+
+        appointmentScheduleArea = new JTextArea();
+        appointmentScheduleArea.setEditable(false);
+        appointmentScheduleArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        appointmentScheduleArea.setLineWrap(true);
+        appointmentScheduleArea.setWrapStyleWord(true);
+        appointmentScheduleArea.setText("Loading appointments...");
+
+        JScrollPane appointmentScroll = new JScrollPane(appointmentScheduleArea);
+        appointmentPanel.add(appointmentScroll, BorderLayout.CENTER);
+
+        JButton refreshAppointmentsButton = new JButton("Refresh Appointments");
+        refreshAppointmentsButton.addActionListener(e -> loadAppointmentSchedule());
+        appointmentPanel.add(refreshAppointmentsButton, BorderLayout.SOUTH);
+
+        rightTabs.addTab("Appointments", appointmentPanel);
+
+        rightSidePanel.add(rightTabs, BorderLayout.CENTER);
+        mainLayer.add(rightSidePanel);
+    }
+
+    private void createManualReport() {
+        String clientName = reportClientNameField.getText().trim();
+        String reportType = reportTypeField.getText().trim();
+        String amountText = reportAmountField.getText().trim();
+        String interestText = reportInterestField.getText().trim();
+        String minPaymentText = reportMinPaymentField.getText().trim();
+
+        // Validation
+        if (clientName.isEmpty() || reportType.isEmpty() ||
+                amountText.isEmpty() || interestText.isEmpty() || minPaymentText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all fields.", "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        double amount, interest, minPayment;
+        try {
+            amount = Double.parseDouble(amountText);
+            interest = Double.parseDouble(interestText);
+            minPayment = Double.parseDouble(minPaymentText);
+
+            if (amount <= 0 || interest < 0 || minPayment <= 0) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter valid numbers for amount, interest, and minimum payment.",
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Create the debt
+        String debtName = clientName + " - " + reportType;
+        Debt newDebt = new Debt(debtName, amount, interest, minPayment);
+
+        // Add to TOS (top of client debt stack)
+        clientDebts.push(newDebt);
+
+        // Update UI
+        refreshTowerVisualization();
+        updateAnalytics();
+
+        // Log the action
+        log("CREATED MANUAL REPORT: " + debtName + " ($" + String.format("%.2f", amount) + ") added to TOS");
+
+        // Show success message
+        JOptionPane.showMessageDialog(this,
+                "Report created successfully!\n" +
+                        "Client: " + clientName + "\n" +
+                        "Type: " + reportType + "\n" +
+                        "Amount: $" + String.format("%.2f", amount) + "\n" +
+                        "Added to TOS position",
+                "Report Created",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        // Clear fields
+        reportClientNameField.setText("");
+        reportTypeField.setText("");
+        reportAmountField.setText("");
+        reportInterestField.setText("");
+        reportMinPaymentField.setText("");
+    }
+
+    private void loadAppointmentSchedule() {
+        try {
+            ArrayList<ConsultationAppointment> appointments = DataManager.loadScheduledAppointments();
+            String currentUsername = controller.getCurrentUsername();
+
+            if (currentUsername == null) {
+                appointmentScheduleArea.setText("Not logged in.");
+                return;
+            }
+
+            StringBuilder scheduleText = new StringBuilder();
+            scheduleText.append("Your Appointment Schedule:\n");
+            scheduleText.append("===========================\n\n");
+
+            int yourAppointments = 0;
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
+
+            for (ConsultationAppointment appointment : appointments) {
+                if (appointment.getAdvisorUsername().equals(currentUsername)) {
+                    yourAppointments++;
+                    scheduleText.append("Client: " + appointment.getClientName() + "\n");
+                    scheduleText.append("Request: " + appointment.getReason() + "\n");
+                    scheduleText.append("Platform: " + appointment.getPlatform() + "\n");
+                    scheduleText.append("Date: " + appointment.getAppointmentDate() + "\n");
+                    scheduleText.append("Status: " + appointment.getStatus() + "\n");
+                    scheduleText.append("------------------------------------\n");
+                }
+            }
+
+            if (yourAppointments == 0) {
+                scheduleText.append("No scheduled appointments.\n");
+                scheduleText.append("Check 'Client Requests' for pending requests.");
+            } else {
+                scheduleText.append("\nTotal Appointments: " + yourAppointments);
+            }
+
+            appointmentScheduleArea.setText(scheduleText.toString());
+            updateAnalytics();
+
+        } catch (Exception e) {
+            appointmentScheduleArea.setText("Error loading appointments: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void updateAnalytics() {
+        // Update reports count
+        int totalReports = clientDebts.size() + auxiliaryDebts.size() + paidOffDebts.size();
+        totalReportsLabel.setText(String.valueOf(totalReports));
+
+        // Update solved reports count
+        solvedReportsLabel.setText(String.valueOf(paidOffDebts.size()));
+
+        // Update appointments count
+        try {
+            ArrayList<ConsultationAppointment> appointments = DataManager.loadScheduledAppointments();
+            String currentUsername = controller.getCurrentUsername();
+            int yourAppointments = 0;
+
+            if (currentUsername != null) {
+                for (ConsultationAppointment appointment : appointments) {
+                    if (appointment.getAdvisorUsername().equals(currentUsername)) {
+                        yourAppointments++;
+                    }
+                }
+            }
+
+            totalAppointmentsLabel.setText(String.valueOf(yourAppointments));
+        } catch (Exception e) {
+            totalAppointmentsLabel.setText("0");
+        }
+
+        // Update unique clients count
+        totalClientsLabel.setText(String.valueOf(getUniqueClientCount()));
+    }
+
+    private int getUniqueClientCount() {
+        Set<String> uniqueClients = new HashSet<>();
+
+        // Extract client names from debts
+        for (Debt debt : clientDebts) {
+            String[] parts = debt.getName().split(" - ");
+            if (parts.length > 0) {
+                uniqueClients.add(parts[0]);
+            }
+        }
+
+        for (Debt debt : auxiliaryDebts) {
+            String[] parts = debt.getName().split(" - ");
+            if (parts.length > 0) {
+                uniqueClients.add(parts[0]);
+            }
+        }
+
+        for (Debt debt : paidOffDebts) {
+            String[] parts = debt.getName().split(" - ");
+            if (parts.length > 0) {
+                uniqueClients.add(parts[0]);
+            }
+        }
+
+        return uniqueClients.size();
+    }
+
     private void refreshDashboard() {
         if (towerVis != null) {
             towerVis.repaint();
         }
+        updateAnalytics();
         log("Dashboard refreshed at: " + new Date());
     }
 
@@ -357,6 +741,9 @@ public class FADashboard extends JFrame {
             requestDialog.setVisible(true);
 
             log("Showing " + myRequests.size() + " consultation requests");
+
+            // Refresh appointments after handling requests
+            loadAppointmentSchedule();
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
@@ -473,6 +860,10 @@ public class FADashboard extends JFrame {
             parentDialog.dispose();
             showClientConsultationRequests();
 
+            // Update analytics and appointments
+            updateAnalytics();
+            loadAppointmentSchedule();
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(parentDialog,
                     "Error scheduling appointment: " + e.getMessage(),
@@ -504,6 +895,9 @@ public class FADashboard extends JFrame {
 
                 parentDialog.dispose();
                 showClientConsultationRequests();
+
+                // Update appointments
+                loadAppointmentSchedule();
 
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(parentDialog,
@@ -590,6 +984,7 @@ public class FADashboard extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
 
                 refreshTowerVisualization();
+                updateAnalytics();
             }
         } else {
             JOptionPane.showMessageDialog(this,
@@ -646,6 +1041,7 @@ public class FADashboard extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
 
                 refreshTowerVisualization();
+                updateAnalytics();
             }
         } else {
             JOptionPane.showMessageDialog(this,
@@ -667,7 +1063,8 @@ public class FADashboard extends JFrame {
                             "User Type: " + currentUser.getUserType() + "\n" +
                             "Active Reports: " + clientDebts.size() + "\n" +
                             "Auxiliary Reports: " + auxiliaryDebts.size() + "\n" +
-                            "Solved Reports: " + paidOffDebts.size(),
+                            "Solved Reports: " + paidOffDebts.size() + "\n" +
+                            "Total Unique Clients: " + getUniqueClientCount(),
                     "User Profile",
                     JOptionPane.INFORMATION_MESSAGE);
         } else {
@@ -854,7 +1251,7 @@ public class FADashboard extends JFrame {
             int gap = 5;
             Debt[] debtsArray = auxiliaryDebts.toArray(new Debt[0]);
 
-            for (int i = 0; i < Math.min(debtsArray.length, 6); i++) {
+            for (int i = 0; i < Math.min(debtsArray.length, 6); i++) { // FIXED: changed debitsArray to debtsArray
                 Debt d = debtsArray[i];
                 int yPos = baseY - gap - brickH - (i * (brickH + gap));
 
