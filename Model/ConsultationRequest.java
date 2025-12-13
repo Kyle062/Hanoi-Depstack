@@ -9,18 +9,27 @@ public class ConsultationRequest implements Serializable {
     private String clientUsername;
     private String clientName;
     private String reason;
-    private String preferredDate;
+    private String advisorUsername;
+    private String advisorName;
+    private String platform;
+    private String appointmentDate;
     private Date requestDate;
+    private String status; // PENDING, SCHEDULED, REJECTED, COMPLETED
 
-    public ConsultationRequest(String clientUsername, String clientName, String reason, String preferredDate) {
+    public ConsultationRequest(String clientUsername, String clientName, String reason,
+            String advisorUsername, String advisorName, String platform) {
         this.clientUsername = clientUsername;
         this.clientName = clientName;
         this.reason = reason;
-        this.preferredDate = preferredDate;
+        this.advisorUsername = advisorUsername;
+        this.advisorName = advisorName;
+        this.platform = platform;
+        this.appointmentDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date());
         this.requestDate = new Date();
+        this.status = "PENDING";
     }
 
-    // Getters
+    // Getters and Setters
     public String getClientUsername() {
         return clientUsername;
     }
@@ -33,22 +42,42 @@ public class ConsultationRequest implements Serializable {
         return reason;
     }
 
-    public String getPreferredDate() {
-        return preferredDate;
+    public String getAdvisorUsername() {
+        return advisorUsername;
+    }
+
+    public String getAdvisorName() {
+        return advisorName;
+    }
+
+    public String getPlatform() {
+        return platform;
+    }
+
+    public String getAppointmentDate() {
+        return appointmentDate;
     }
 
     public Date getRequestDate() {
         return requestDate;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     @Override
     public String toString() {
         return "ConsultationRequest{" +
-                "clientUsername='" + clientUsername + '\'' +
-                ", clientName='" + clientName + '\'' +
+                "client='" + clientName + '\'' +
+                ", advisor='" + advisorName + '\'' +
                 ", reason='" + reason + '\'' +
-                ", preferredDate='" + preferredDate + '\'' +
-                ", requestDate=" + requestDate +
+                ", platform='" + platform + '\'' +
+                ", status='" + status + '\'' +
                 '}';
     }
 }

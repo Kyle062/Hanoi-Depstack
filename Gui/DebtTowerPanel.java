@@ -5,6 +5,7 @@ import Model.DebtManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.ArrayList;  // Added import
 
 public class DebtTowerPanel extends JPanel {
     private DebtManager manager;

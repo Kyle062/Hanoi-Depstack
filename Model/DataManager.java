@@ -3,7 +3,6 @@ package Model;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DataManager {
@@ -11,137 +10,149 @@ public class DataManager {
     private static final String DEBTS_FILE = "debts_";
     private static final String CONSULTATION_REQUESTS_FILE = "consultation_requests.dat";
     private static final String SCHEDULED_APPOINTMENTS_FILE = "scheduled_appointments.dat";
+    private static final String CLIENT_REQUESTS_FILE = "client_requests_";
 
-    // Save users to file
+    // Save users
     public static void saveUsers(Map<String, User> users) {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(USERS_FILE))) {
             oos.writeObject(users);
-            System.out.println("Users saved successfully.");
         } catch (IOException e) {
             System.err.println("Error saving users: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // Load users from file
+    // Load users
     @SuppressWarnings("unchecked")
     public static Map<String, User> loadUsers() {
         File file = new File(USERS_FILE);
         if (!file.exists()) {
-            System.out.println("Users file not found. Creating new user database.");
             return new HashMap<>();
         }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
             return (Map<String, User>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error loading users: " + e.getMessage());
-            e.printStackTrace();
             return new HashMap<>();
         }
     }
 
-    // Save consultation requests
-    public static void saveConsultationRequests(List<ConsultationRequest> requests) {
+    // Save consultation requests (for advisors)
+    public static void saveConsultationRequests(ArrayList<ConsultationRequest> requests) {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CONSULTATION_REQUESTS_FILE))) {
             oos.writeObject(requests);
-            System.out.println("Consultation requests saved: " + requests.size());
         } catch (IOException e) {
             System.err.println("Error saving consultation requests: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // Load consultation requests
+    // Load consultation requests (for advisors)
     @SuppressWarnings("unchecked")
-    public static List<ConsultationRequest> loadConsultationRequests() {
+    public static ArrayList<ConsultationRequest> loadConsultationRequests() {
         File file = new File(CONSULTATION_REQUESTS_FILE);
         if (!file.exists()) {
-            System.out.println("Consultation requests file not found.");
             return new ArrayList<>();
         }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (List<ConsultationRequest>) ois.readObject();
+            return (ArrayList<ConsultationRequest>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error loading consultation requests: " + e.getMessage());
-            e.printStackTrace();
             return new ArrayList<>();
         }
     }
 
     // Save scheduled appointments
-    public static void saveScheduledAppointments(List<ConsultationAppointment> appointments) {
+    public static void saveScheduledAppointments(ArrayList<ConsultationAppointment> appointments) {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(SCHEDULED_APPOINTMENTS_FILE))) {
             oos.writeObject(appointments);
-            System.out.println("Scheduled appointments saved: " + appointments.size());
         } catch (IOException e) {
             System.err.println("Error saving scheduled appointments: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     // Load scheduled appointments
     @SuppressWarnings("unchecked")
-    public static List<ConsultationAppointment> loadScheduledAppointments() {
+    public static ArrayList<ConsultationAppointment> loadScheduledAppointments() {
         File file = new File(SCHEDULED_APPOINTMENTS_FILE);
         if (!file.exists()) {
-            System.out.println("Scheduled appointments file not found.");
             return new ArrayList<>();
         }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (List<ConsultationAppointment>) ois.readObject();
+            return (ArrayList<ConsultationAppointment>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error loading scheduled appointments: " + e.getMessage());
-            e.printStackTrace();
             return new ArrayList<>();
         }
     }
 
-    // Save debts for a specific user
-    public static void saveUserDebts(String username, List<Debt> debts, List<Debt> paidOffDebts) {
+    // Save client consultation requests (for clients to see their own requests)
+    public static void saveClientRequests(String clientUsername, ArrayList<ConsultationRequest> requests) {
+        String filename = CLIENT_REQUESTS_FILE + clientUsername + ".dat";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+            oos.writeObject(requests);
+        } catch (IOException e) {
+            System.err.println("Error saving client requests: " + e.getMessage());
+        }
+    }
+
+    // Load client consultation requests
+    @SuppressWarnings("unchecked")
+    public static ArrayList<ConsultationRequest> loadClientRequests(String clientUsername) {
+        String filename = CLIENT_REQUESTS_FILE + clientUsername + ".dat";
+        File file = new File(filename);
+        if (!file.exists()) {
+            return new ArrayList<>();
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            return (ArrayList<ConsultationRequest>) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    // Save user debts
+    public static void saveUserDebts(String username, ArrayList<Debt> debts, ArrayList<Debt> paidOffDebts) {
         String filename = DEBTS_FILE + username + ".dat";
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
             DebtData debtData = new DebtData(debts, paidOffDebts);
             oos.writeObject(debtData);
-            System.out.println("Debts saved for user: " + username);
         } catch (IOException e) {
             System.err.println("Error saving debts: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // Load debts for a specific user
+    // Load user debts
     public static DebtData loadUserDebts(String username) {
         String filename = DEBTS_FILE + username + ".dat";
         File file = new File(filename);
         if (!file.exists()) {
-            System.out.println("No saved debts found for user: " + username);
             return new DebtData();
         }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
             return (DebtData) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error loading debts: " + e.getMessage());
-            e.printStackTrace();
             return new DebtData();
         }
     }
 
-    // Add a consultation request from client
+    // Add a consultation request
     public static void addConsultationRequest(ConsultationRequest request) {
-        List<ConsultationRequest> requests = loadConsultationRequests();
-        requests.add(request);
-        saveConsultationRequests(requests);
-        System.out.println("Consultation request added for client: " + request.getClientName());
+        // Add to advisor's list
+        ArrayList<ConsultationRequest> advisorRequests = loadConsultationRequests();
+        advisorRequests.add(request);
+        saveConsultationRequests(advisorRequests);
+
+        // Add to client's personal list
+        ArrayList<ConsultationRequest> clientRequests = loadClientRequests(request.getClientUsername());
+        clientRequests.add(request);
+        saveClientRequests(request.getClientUsername(), clientRequests);
     }
 
     // Get all financial advisors
-    public static List<User> getFinancialAdvisors() {
+    public static ArrayList<User> getFinancialAdvisors() {
         Map<String, User> users = loadUsers();
-        List<User> advisors = new ArrayList<>();
+        ArrayList<User> advisors = new ArrayList<>();
 
         for (User user : users.values()) {
             if ("ADVISOR".equals(user.getUserType())) {
@@ -149,63 +160,51 @@ public class DataManager {
             }
         }
 
-        System.out.println("Found " + advisors.size() + " financial advisors");
         return advisors;
     }
 
-    // Get consultation requests for a specific advisor (by username)
-    public static List<ConsultationRequest> getConsultationRequestsForAdvisor(String advisorUsername) {
-        List<ConsultationRequest> allRequests = loadConsultationRequests();
-        List<ConsultationRequest> advisorRequests = new ArrayList<>();
+    // Delete a consultation request
+    public static void deleteConsultationRequest(ConsultationRequest request) {
+        // Remove from advisor's list
+        ArrayList<ConsultationRequest> advisorRequests = loadConsultationRequests();
+        advisorRequests.remove(request);
+        saveConsultationRequests(advisorRequests);
 
-        // For now, all requests are visible to all advisors
-        // In a more advanced system, you could filter by advisor specialization, etc.
-        return allRequests;
-    }
-
-    // Get scheduled appointments for a specific advisor
-    public static List<ConsultationAppointment> getAppointmentsForAdvisor(String advisorUsername) {
-        List<ConsultationAppointment> allAppointments = loadScheduledAppointments();
-        List<ConsultationAppointment> advisorAppointments = new ArrayList<>();
-
-        for (ConsultationAppointment appointment : allAppointments) {
-            if (appointment.getAdvisorUsername().equals(advisorUsername)) {
-                advisorAppointments.add(appointment);
+        // Update in client's list
+        ArrayList<ConsultationRequest> clientRequests = loadClientRequests(request.getClientUsername());
+        for (int i = 0; i < clientRequests.size(); i++) {
+            ConsultationRequest cr = clientRequests.get(i);
+            if (cr.getClientUsername().equals(request.getClientUsername()) &&
+                    cr.getAdvisorUsername().equals(request.getAdvisorUsername()) &&
+                    cr.getReason().equals(request.getReason())) {
+                clientRequests.set(i, request); // Update status
+                break;
             }
         }
-
-        return advisorAppointments;
+        saveClientRequests(request.getClientUsername(), clientRequests);
     }
 
-    // Delete a consultation request (when scheduled or rejected)
-    public static void deleteConsultationRequest(ConsultationRequest request) {
-        List<ConsultationRequest> requests = loadConsultationRequests();
-        requests.remove(request);
-        saveConsultationRequests(requests);
-        System.out.println("Consultation request removed for client: " + request.getClientName());
-    }
-
-    // Inner class to hold both current and paid off debts
+    // DebtData class
     public static class DebtData implements Serializable {
         private static final long serialVersionUID = 1L;
-        private List<Debt> currentDebts;
-        private List<Debt> paidOffDebts;
+        private ArrayList<Debt> currentDebts;
+        private ArrayList<Debt> paidOffDebts;
 
         public DebtData() {
-            this.currentDebts = new java.util.ArrayList<>();
-            this.paidOffDebts = new java.util.ArrayList<>();
+            this.currentDebts = new ArrayList<>();
+            this.paidOffDebts = new ArrayList<>();
         }
 
-        public DebtData(List<Debt> currentDebts, List<Debt> paidOffDebts) {
+        public DebtData(ArrayList<Debt> currentDebts, ArrayList<Debt> paidOffDebts) {
             this.currentDebts = currentDebts;
             this.paidOffDebts = paidOffDebts;
         }
 
-        public List<Debt> getCurrentDebts() {
+        public ArrayList<Debt> getCurrentDebts() {
             return currentDebts;
         }
 
-        public List<Debt> getPaidOffDebts() {
+        public ArrayList<Debt> getPaidOffDebts() {
             return paidOffDebts;
         }
     }

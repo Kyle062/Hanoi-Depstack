@@ -14,7 +14,7 @@ public class ConsultationAppointment implements Serializable {
     private String platform;
     private String appointmentDate;
     private Date scheduledDate;
-    private String status; // SCHEDULED, COMPLETED, CANCELLED
+    private String status; // SCHEDULED, COMPLETED
 
     public ConsultationAppointment(String clientUsername, String clientName,
             String advisorUsername, String advisorName,
@@ -31,7 +31,6 @@ public class ConsultationAppointment implements Serializable {
         this.status = status;
     }
 
-    // Getters and Setters
     public String getClientUsername() {
         return clientUsername;
     }
