@@ -28,20 +28,20 @@ public class FADashboard extends JFrame {
 
     public FADashboard(AppController controller) {
         this.controller = controller;
-        
+
         setTitle("Hanoi Debt Tower Dashboard - Financial Advisor");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+
         // Set a reasonable default size instead of just maximized
         setSize(1400, 900);
         setLocationRelativeTo(null); // Center the window
-        
+
         initializeSampleDebtData();
         initUI();
-        
+
         // Make sure window is visible
         setVisible(true);
-        
+
         // Maximize after UI is created
         setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
@@ -57,77 +57,28 @@ public class FADashboard extends JFrame {
     private void initUI() {
         // Use BorderLayout for the frame
         setLayout(new BorderLayout());
-        
+
         // Create layered pane
         layeredPane = new JLayeredPane();
+        layeredPane.setLayout(null); // Use absolute positioning
         add(layeredPane, BorderLayout.CENTER);
-        
+
         setupBackground();
-        
+
         mainLayer = new JPanel(null);
         mainLayer.setOpaque(false);
+        mainLayer.setBounds(0, 0, 1500, 900);
         layeredPane.add(mainLayer, JLayeredPane.PALETTE_LAYER);
-        
+
         createSidebar();
         createMainContent();
 
-        // Add component listener to handle resizing
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                resizeComponents();
-            }
-        });
-        
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 controller.saveAllData();
             }
         });
-        
-        // Initial resize
-        resizeComponents();
-    }
-    
-    private void resizeComponents() {
-        int width = getWidth();
-        int height = getHeight();
-        
-        // Resize background
-        if (backgroundLabel != null) {
-            backgroundLabel.setBounds(0, 0, width, height);
-        }
-        
-        // Resize main layer
-        if (mainLayer != null) {
-            mainLayer.setBounds(0, 0, width, height);
-        }
-        
-        // Resize sidebar
-        if (mainLayer.getComponentCount() > 0) {
-            Component sidebarContainer = mainLayer.getComponent(0);
-            if (sidebarContainer != null) {
-                sidebarContainer.setBounds(20, 250, 140, Math.min(1000, height - 300));
-            }
-        }
-        
-        // Resize tower container
-        if (towerContainer != null) {
-            towerContainer.setBounds(180, 30, width - 220, 620);
-        }
-        
-        // Resize logs container
-        if (mainLayer.getComponentCount() > 1) {
-            Component logContainer = mainLayer.getComponent(1);
-            if (logContainer != null) {
-                logContainer.setBounds(180, 670, width - 220, height - 700);
-            }
-        }
-        
-        // Repaint everything
-        revalidate();
-        repaint();
     }
 
     private void setupBackground() {
@@ -140,31 +91,39 @@ public class FADashboard extends JFrame {
                 // Create a simple gradient background as fallback
                 bg = new BufferedImage(1920, 1080, BufferedImage.TYPE_INT_RGB);
                 Graphics2D g2d = bg.createGraphics();
-                GradientPaint gradient = new GradientPaint(0, 0, new Color(60, 40, 30), 
-                                                          1920, 1080, new Color(40, 20, 10));
+                GradientPaint gradient = new GradientPaint(0, 0, new Color(60, 40, 30),
+                        1920, 1080, new Color(40, 20, 10));
                 g2d.setPaint(gradient);
                 g2d.fillRect(0, 0, 1920, 1080);
                 g2d.dispose();
             }
-            
+
             backgroundLabel = new JLabel(new ImageIcon(bg)) {
                 @Override
                 protected void paintComponent(Graphics g) {
-                    g.drawImage(((ImageIcon)getIcon()).getImage(), 0, 0, getWidth(), getHeight(), this);
+                    g.drawImage(((ImageIcon) getIcon()).getImage(), 0, 0, getWidth(), getHeight(), this);
                 }
             };
+            backgroundLabel.setBounds(0, 0, 1920, 1080);
         } catch (IOException e) {
             System.err.println("Error loading background image: " + e.getMessage());
             backgroundLabel = new JLabel();
             backgroundLabel.setOpaque(true);
             backgroundLabel.setBackground(new Color(60, 40, 30));
+            backgroundLabel.setBounds(0, 0, 1920, 900);
         }
         layeredPane.add(backgroundLabel, JLayeredPane.DEFAULT_LAYER);
     }
 
     private void createSidebar() {
+        // Adjust these values to change sidebar position and size
+        int sidebarX = 20;
+        int sidebarY = 250;
+        int sidebarWidth = 140;
+        int sidebarHeight = 500;
+
         RoundedPanel sidebarContainer = new RoundedPanel(15, new Color(40, 40, 40, 200));
-        sidebarContainer.setBounds(20, 250, 140, 1000);
+        sidebarContainer.setBounds(sidebarX, sidebarY, sidebarWidth, sidebarHeight);
         sidebarContainer.setLayout(new BorderLayout());
 
         JPanel sidebar = new JPanel();
@@ -189,7 +148,7 @@ public class FADashboard extends JFrame {
             }
         }));
         sidebar.add(Box.createVerticalStrut(20));
-        
+
         sidebar.add(createSidebarButton("Client Requests", "View Client Consultation Requests", e -> {
             try {
                 showClientConsultationRequests();
@@ -198,7 +157,7 @@ public class FADashboard extends JFrame {
             }
         }));
         sidebar.add(Box.createVerticalStrut(20));
-        
+
         sidebar.add(createSidebarButton("Show TOS", "Show Top of Stack Details", e -> {
             try {
                 showCurrentReport();
@@ -207,7 +166,7 @@ public class FADashboard extends JFrame {
             }
         }));
         sidebar.add(Box.createVerticalStrut(20));
-        
+
         sidebar.add(createSidebarButton("To Auxiliary", "Move TOS to Auxiliary", e -> {
             try {
                 moveToAuxiliary();
@@ -216,7 +175,7 @@ public class FADashboard extends JFrame {
             }
         }));
         sidebar.add(Box.createVerticalStrut(20));
-        
+
         sidebar.add(createSidebarButton("Solve Report", "Mark report as solved", e -> {
             try {
                 solveReport();
@@ -225,7 +184,7 @@ public class FADashboard extends JFrame {
             }
         }));
         sidebar.add(Box.createVerticalStrut(20));
-        
+
         sidebar.add(createSidebarButton("Profile", "User Profile", e -> {
             try {
                 showProfile();
@@ -234,7 +193,7 @@ public class FADashboard extends JFrame {
             }
         }));
         sidebar.add(Box.createVerticalStrut(20));
-        
+
         sidebar.add(createSidebarButton("Logout", "Logout from system", e -> {
             try {
                 logout();
@@ -247,12 +206,12 @@ public class FADashboard extends JFrame {
         sidebarContainer.add(sidebar, BorderLayout.NORTH);
         mainLayer.add(sidebarContainer);
     }
-    
+
     private void showError(String message, Exception ex) {
-        JOptionPane.showMessageDialog(this, 
-            message + ": " + ex.getMessage(), 
-            "Error", 
-            JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this,
+                message + ": " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
 
@@ -284,19 +243,29 @@ public class FADashboard extends JFrame {
     }
 
     private void createMainContent() {
-        // Tower Visualization
+        // Tower Visualization - Adjust these values to change position and size
+        int towerX = 180;
+        int towerY = 30;
+        int towerWidth = 1100;
+        int towerHeight = 620;
+
         towerContainer = new RoundedPanel(20, Color.WHITE);
         towerContainer.setLayout(new BorderLayout());
-        towerContainer.setBounds(180, 30, 1250, 620);
+        towerContainer.setBounds(towerX, towerY, towerWidth, towerHeight);
 
         towerVis = new TowerVisualizationPanel(clientDebts, auxiliaryDebts, paidOffDebts);
         towerContainer.add(towerVis, BorderLayout.CENTER);
         mainLayer.add(towerContainer);
 
-        // Logs Panel
+        // Logs Panel - Adjust these values to change position and size
+        int logsX = 180;
+        int logsY = 670;
+        int logsWidth = 1100;
+        int logsHeight = 200;
+
         JPanel logContainer = new JPanel(new BorderLayout());
         logContainer.setBackground(Color.BLACK);
-        logContainer.setBounds(180, 670, 1250, 200);
+        logContainer.setBounds(logsX, logsY, logsWidth, logsHeight);
 
         JLabel logsTitle = new JLabel("OPERATION LOGS");
         logsTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -312,7 +281,8 @@ public class FADashboard extends JFrame {
         logsArea.setText(" > Financial Advisor Dashboard Initialized\n" +
                 " > Ready to handle client consultation requests\n" +
                 " > Client debt stack loaded: " + clientDebts.size() + " items\n" +
-                " > Logged in as: " + (controller.getCurrentUser() != null ? controller.getCurrentUser().getFullName() : "Unknown"));
+                " > Logged in as: "
+                + (controller.getCurrentUser() != null ? controller.getCurrentUser().getFullName() : "Unknown"));
 
         JScrollPane logsScrollPane = new JScrollPane(logsArea);
         logsScrollPane.setBorder(null);
@@ -320,7 +290,7 @@ public class FADashboard extends JFrame {
         logsScrollPane.getViewport().setBackground(Color.BLACK);
         logContainer.add(logsScrollPane, BorderLayout.CENTER);
         mainLayer.add(logContainer);
-        
+
         // Add a welcome message
         log("Welcome to Financial Advisor Dashboard!");
         log("Current time: " + new Date());
@@ -340,12 +310,12 @@ public class FADashboard extends JFrame {
 
             ArrayList<ConsultationRequest> myRequests = new ArrayList<>();
             String currentUsername = controller.getCurrentUsername();
-            
+
             if (currentUsername == null) {
                 JOptionPane.showMessageDialog(this, "Not logged in!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+
             for (ConsultationRequest request : requests) {
                 if (request.getAdvisorUsername().equals(currentUsername)) {
                     myRequests.add(request);
@@ -385,14 +355,14 @@ public class FADashboard extends JFrame {
             scrollPane.setBorder(null);
             requestDialog.add(scrollPane, BorderLayout.CENTER);
             requestDialog.setVisible(true);
-            
+
             log("Showing " + myRequests.size() + " consultation requests");
-            
+
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Error loading consultation requests: " + e.getMessage(), 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Error loading consultation requests: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
     }
@@ -502,7 +472,7 @@ public class FADashboard extends JFrame {
             refreshTowerVisualization();
             parentDialog.dispose();
             showClientConsultationRequests();
-            
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(parentDialog,
                     "Error scheduling appointment: " + e.getMessage(),
@@ -534,7 +504,7 @@ public class FADashboard extends JFrame {
 
                 parentDialog.dispose();
                 showClientConsultationRequests();
-                
+
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(parentDialog,
                         "Error rejecting request: " + e.getMessage(),
@@ -956,10 +926,10 @@ public class FADashboard extends JFrame {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(null, 
-                    "Error starting application: " + e.getMessage(), 
-                    "Startup Error", 
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                        "Error starting application: " + e.getMessage(),
+                        "Startup Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
     }
