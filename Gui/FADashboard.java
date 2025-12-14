@@ -139,8 +139,8 @@ public class FADashboard extends JFrame {
     private void createSidebar() {
         // Adjust these values to change sidebar position and size
         int sidebarX = 20;
-        int sidebarY = 250;
-        int sidebarWidth = 140;
+        int sidebarY = 200;
+        int sidebarWidth = 155;
         int sidebarHeight = 500;
 
         RoundedPanel sidebarContainer = new RoundedPanel(15, new Color(40, 40, 40, 200));
@@ -240,12 +240,12 @@ public class FADashboard extends JFrame {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setMaximumSize(new Dimension(120, 40));
+        button.setMaximumSize(new Dimension(130, 40));
         button.setBackground(new Color(241, 122, 80));
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-        button.setFont(new Font("SansSerif", Font.BOLD, 10));
+        button.setFont(new Font("SansSerif", Font.BOLD, 12));
         button.addActionListener(action);
 
         button.addMouseListener(new MouseAdapter() {

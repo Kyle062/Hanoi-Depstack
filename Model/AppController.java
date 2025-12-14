@@ -2,7 +2,7 @@ package Model;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList; // Added import
+import java.util.ArrayList;
 
 public class AppController {
     private Map<String, User> users;
@@ -93,14 +93,10 @@ public class AppController {
     // Save current user's debts
     public void saveUserDebts() {
         if (currentUsername != null) {
-            java.util.List<Debt> currentDebts = debtManager.getStackForVisualization();
-            java.util.List<Debt> paidOffDebts = debtManager.getPaidOffForVisualization();
+            ArrayList<Debt> currentDebts = debtManager.getStackForVisualization();
+            ArrayList<Debt> paidOffDebts = debtManager.getPaidOffForVisualization();
 
-            // Convert to ArrayList for DataManager
-            ArrayList<Debt> currentDebtsArrayList = new ArrayList<>(currentDebts);
-            ArrayList<Debt> paidOffDebtsArrayList = new ArrayList<>(paidOffDebts);
-
-            DataManager.saveUserDebts(currentUsername, currentDebtsArrayList, paidOffDebtsArrayList);
+            DataManager.saveUserDebts(currentUsername, currentDebts, paidOffDebts);
             System.out.println("Debts saved for user: " + currentUsername);
         }
     }

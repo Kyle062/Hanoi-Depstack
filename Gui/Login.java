@@ -85,7 +85,7 @@ public class Login extends JFrame {
         });
 
         // UserID Field on right side
-        JLabel userLabel = new JLabel("UserID/ UserName:");
+        JLabel userLabel = new JLabel("Username:");
         userLabel.setBounds(FRAME_WIDTH / 2 + -339, 320, 190, 20);
         userLabel.setFont(new Font("Arial", Font.BOLD, 15));
         userLabel.setForeground(Color.BLACK);
@@ -119,7 +119,7 @@ public class Login extends JFrame {
         JButton loginButton = new JButton("LOGIN");
         loginButton.setBounds(FRAME_WIDTH / 2 + -284, 545, 200, 40);
         loginButton.setBackground(new Color(255, 120, 0));
-        loginButton.setForeground(Color.WHITE);
+        loginButton.setForeground(Color.BLACK);
         loginButton.setFont(new Font("Arial", Font.BOLD, 16));
         loginButton.setFocusPainted(false);
         backgroundPanel.add(loginButton, 0);
