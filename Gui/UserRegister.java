@@ -115,6 +115,7 @@ public class UserRegister extends JFrame {
 
         JTextField usernameField = new JTextField();
         usernameField.setBounds(FRAME_WIDTH / 2 + 160, 395, 340, 37);
+        usernameField.setFont(new Font("Arial", Font.BOLD, 15));
         backgroundPanel.add(usernameField, 0);
 
         JLabel passwordLabel = new JLabel("Create Password: ");

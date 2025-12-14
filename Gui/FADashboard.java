@@ -1227,12 +1227,12 @@ public class FADashboard extends JFrame {
             g2.setColor(Color.BLACK);
             for (int i = 0; i < 3; i++) {
                 int cx = colW * i + colW / 2;
-                g2.fillRoundRect(cx - 5, 80, 10, baseY - 80, 10, 10);
+                g2.fillRoundRect(cx - 10, 80, 15, baseY - 80, 10, 10);
 
                 g2.setColor(Color.BLACK);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 12));
+                g2.setFont(new Font("SansSerif", Font.BOLD, 13));
                 String lbl = labels[i];
-                g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2, baseY + 30);
+                g2.drawString(lbl, cx - fm.stringWidth(lbl) / 2 + 30, baseY + 30);
             }
 
             drawClientDebts(g2, colW / 2, baseY);
@@ -1248,7 +1248,7 @@ public class FADashboard extends JFrame {
                 return;
             }
 
-            int brickH = 40;
+            int brickH = 50;
             int gap = 5;
             Debt[] debtsArray = clientDebts.toArray(new Debt[0]);
 
@@ -1271,7 +1271,7 @@ public class FADashboard extends JFrame {
 
                 g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 15, 15);
                 g2.setColor(Color.WHITE);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 10));
+                g2.setFont(new Font("SansSerif", Font.BOLD, 13));
 
                 String[] parts = d.getName().split(" - ", 2);
                 String clientName = parts.length > 0 ? parts[0] : d.getName();
@@ -1282,18 +1282,18 @@ public class FADashboard extends JFrame {
                     nameText = nameText.substring(0, 17) + "...";
                 g2.drawString(nameText, centerX - width / 2 + 10, yPos + 15);
 
-                g2.setFont(new Font("SansSerif", Font.PLAIN, 8));
+                g2.setFont(new Font("SansSerif", Font.PLAIN, 13));
                 String typeText = reportType;
                 if (typeText.length() > 25)
                     typeText = typeText.substring(0, 22) + "...";
                 g2.drawString(typeText, centerX - width / 2 + 10, yPos + 28);
 
-                g2.setFont(new Font("SansSerif", Font.BOLD, 9));
+                g2.setFont(new Font("SansSerif", Font.BOLD, 12));
                 if (i == 0)
-                    g2.drawString("TOS", centerX - width / 2 + 10, yPos + 38);
+                    g2.drawString("", centerX - width / 2 + 10, yPos + 38);
 
                 String balanceText = "$" + (int) d.getCurrentBalance();
-                g2.drawString(balanceText, centerX + width / 2 - 30, yPos + 25);
+                g2.drawString(balanceText, centerX + width / 2 - 50, yPos + 25);
             }
         }
 
