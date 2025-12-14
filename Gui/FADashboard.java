@@ -846,17 +846,40 @@ public class FADashboard extends JFrame {
                     new Date(),
                     "SCHEDULED");
 
+            // Save the appointment
             ArrayList<ConsultationAppointment> appointments = DataManager.loadScheduledAppointments();
             appointments.add(appointment);
             DataManager.saveScheduledAppointments(appointments);
 
+            // Get all consultation requests
+            ArrayList<ConsultationRequest> allRequests = DataManager.loadConsultationRequests();
+
+            // Find and remove the specific request
+            ConsultationRequest requestToRemove = null;
+            for (ConsultationRequest req : allRequests) {
+                if (req.getClientUsername().equals(request.getClientUsername()) &&
+                        req.getAdvisorUsername().equals(request.getAdvisorUsername()) &&
+                        req.getReason().equals(request.getReason()) &&
+                        req.getRequestDate().equals(request.getRequestDate())) {
+                    requestToRemove = req;
+                    break;
+                }
+            }
+
+            if (requestToRemove != null) {
+                allRequests.remove(requestToRemove);
+            }
+
+            // Save the updated requests list
+            DataManager.saveConsultationRequests(allRequests);
+
+            // Update client's personal request list
             DataManager.deleteConsultationRequest(request);
 
+            // Add consultation fee to client debts
             String debtName = request.getClientName() + " - Consultation (" + request.getReason() + ")";
             Debt consultationDebt = new Debt(debtName, 150.00, 0.0, 150.00);
             clientDebts.push(consultationDebt);
-
-            updateClientRequestStatus(request.getClientUsername(), request, "SCHEDULED");
 
             log("SCHEDULED: Consultation with " + request.getClientName() +
                     " - Added to TOS: " + debtName);
@@ -870,7 +893,7 @@ public class FADashboard extends JFrame {
 
             refreshTowerVisualization();
             parentDialog.dispose();
-            showClientConsultationRequests();
+            showClientConsultationRequests(); // This will refresh the list
 
             // Update analytics and appointments
             updateAnalytics();
@@ -894,9 +917,32 @@ public class FADashboard extends JFrame {
             try {
                 request.setStatus("REJECTED");
 
-                DataManager.deleteConsultationRequest(request);
+                // Get all consultation requests
+                ArrayList<ConsultationRequest> allRequests = DataManager.loadConsultationRequests();
 
-                updateClientRequestStatus(request.getClientUsername(), request, "REJECTED");
+                // Find and remove the specific request
+                ConsultationRequest requestToRemove = null;
+                for (ConsultationRequest req : allRequests) {
+                    if (req.getClientUsername().equals(request.getClientUsername()) &&
+                            req.getAdvisorUsername().equals(request.getAdvisorUsername()) &&
+                            req.getReason().equals(request.getReason()) &&
+                            req.getRequestDate().equals(request.getRequestDate())) {
+                        requestToRemove = req;
+                        break;
+                    }
+                }
+
+                if (requestToRemove != null) {
+                    allRequests.remove(requestToRemove);
+                }
+
+                // Save the updated requests list
+                DataManager.saveConsultationRequests(allRequests);
+
+                // Set status first
+                request.setStatus("REJECTED");
+                // Then call deleteConsultationRequest which will update both lists
+                DataManager.deleteConsultationRequest(request);
 
                 log("REJECTED: Consultation request from " + request.getClientName());
 
@@ -906,7 +952,7 @@ public class FADashboard extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
 
                 parentDialog.dispose();
-                showClientConsultationRequests();
+                showClientConsultationRequests(); // This will refresh the list
 
                 // Update appointments
                 loadAppointmentSchedule();

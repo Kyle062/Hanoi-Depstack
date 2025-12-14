@@ -71,7 +71,7 @@ public class UserDashboard extends JFrame {
         createTopRow();
         createBottomRow();
         createLogsPanel();
-
+        SwingUtilities.invokeLater(() -> refreshConsultationRequests());
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -556,9 +556,7 @@ public class UserDashboard extends JFrame {
     }
 
     private void showMyRequests() {
-        ArrayList<ConsultationRequest> requests = DataManager.loadClientRequests(controller.getCurrentUsername()); // Changed
-                                                                                                                   // to
-                                                                                                                   // ArrayList
+        ArrayList<ConsultationRequest> requests = DataManager.loadClientRequests(controller.getCurrentUsername());
 
         if (requests.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -577,10 +575,23 @@ public class UserDashboard extends JFrame {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Add a refresh button to the header
+        JPanel headerPanel = new JPanel(new BorderLayout());
         JLabel title = new JLabel("My Consultation Requests (" + requests.size() + ")");
         title.setFont(new Font("SansSerif", Font.BOLD, 16));
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        mainPanel.add(title);
+
+        JButton refreshBtn = new JButton("Refresh");
+        refreshBtn.addActionListener(e -> {
+            // Close and reopen the dialog to refresh
+            requestDialog.dispose();
+            SwingUtilities.invokeLater(() -> showMyRequests());
+        });
+
+        headerPanel.add(title, BorderLayout.CENTER);
+        headerPanel.add(refreshBtn, BorderLayout.EAST);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        mainPanel.add(headerPanel);
         mainPanel.add(Box.createVerticalStrut(10));
 
         for (ConsultationRequest request : requests) {
@@ -599,6 +610,22 @@ public class UserDashboard extends JFrame {
         requestDialog.add(buttonPanel, BorderLayout.SOUTH);
 
         requestDialog.setVisible(true);
+    }
+
+    private void refreshConsultationRequests() {
+        // This method refreshes the consultation requests by reloading them from
+        // storage
+        // and updating the UI if there's an open requests dialog
+
+        // Reload requests from DataManager
+        ArrayList<ConsultationRequest> requests = DataManager.loadClientRequests(controller.getCurrentUsername());
+
+        // Log the refresh action
+        log("Refreshed consultation requests. Total: " + requests.size());
+
+        // If there's an open requests dialog, you could update it here
+        // For now, just log that refresh happened
+        addEventToCalendar("Consultation requests refreshed at " + new SimpleDateFormat("hh:mm a").format(new Date()));
     }
 
     private JPanel createRequestPanel(ConsultationRequest request) {

@@ -163,25 +163,101 @@ public class DataManager {
         return advisors;
     }
 
-    // Delete a consultation request
+    // In DataManager class, update or replace the deleteConsultationRequest method:
     public static void deleteConsultationRequest(ConsultationRequest request) {
-        // Remove from advisor's list
-        ArrayList<ConsultationRequest> advisorRequests = loadConsultationRequests();
-        advisorRequests.remove(request);
-        saveConsultationRequests(advisorRequests);
+        try {
+            // Remove from advisor's global list
+            ArrayList<ConsultationRequest> advisorRequests = loadConsultationRequests();
+            ConsultationRequest toRemove = null;
 
-        // Update in client's list
-        ArrayList<ConsultationRequest> clientRequests = loadClientRequests(request.getClientUsername());
-        for (int i = 0; i < clientRequests.size(); i++) {
-            ConsultationRequest cr = clientRequests.get(i);
-            if (cr.getClientUsername().equals(request.getClientUsername()) &&
-                    cr.getAdvisorUsername().equals(request.getAdvisorUsername()) &&
-                    cr.getReason().equals(request.getReason())) {
-                clientRequests.set(i, request); // Update status
-                break;
+            // Find the exact request to remove
+            for (ConsultationRequest req : advisorRequests) {
+                if (req.getClientUsername().equals(request.getClientUsername()) &&
+                        req.getAdvisorUsername().equals(request.getAdvisorUsername()) &&
+                        req.getReason().equals(request.getReason())) {
+
+                    // Use timestamp comparison for better accuracy
+                    long timeDiff = Math.abs(req.getRequestDate().getTime() - request.getRequestDate().getTime());
+                    if (timeDiff < 60000) { // Within 1 minute
+                        toRemove = req;
+                        break;
+                    }
+                }
             }
+
+            if (toRemove != null) {
+                advisorRequests.remove(toRemove);
+                saveConsultationRequests(advisorRequests);
+                System.out.println("Removed consultation request from advisor list: " +
+                        request.getClientName() + " -> " + request.getAdvisorName());
+            }
+
+            // Update client's list - don't remove, just update status
+            ArrayList<ConsultationRequest> clientRequests = loadClientRequests(request.getClientUsername());
+            boolean updated = false;
+
+            for (int i = 0; i < clientRequests.size(); i++) {
+                ConsultationRequest cr = clientRequests.get(i);
+                if (cr.getClientUsername().equals(request.getClientUsername()) &&
+                        cr.getAdvisorUsername().equals(request.getAdvisorUsername()) &&
+                        cr.getReason().equals(request.getReason())) {
+
+                    // Update the status to match
+                    cr.setStatus(request.getStatus());
+                    updated = true;
+                    System.out.println("Updated client request status to: " + request.getStatus());
+                    break;
+                }
+            }
+
+            if (!updated) {
+                // If not found, add it with the updated status
+                request.setStatus(request.getStatus());
+                clientRequests.add(request);
+            }
+
+            saveClientRequests(request.getClientUsername(), clientRequests);
+
+        } catch (Exception e) {
+            System.err.println("Error in deleteConsultationRequest: " + e.getMessage());
+            e.printStackTrace();
         }
-        saveClientRequests(request.getClientUsername(), clientRequests);
+    }
+
+    // In the DataManager class, add this method:
+    public static void updateClientRequestStatus(String clientUsername, ConsultationRequest originalRequest,
+            String newStatus) {
+        try {
+            // Load client's personal requests
+            ArrayList<ConsultationRequest> clientRequests = loadClientRequests(clientUsername);
+
+            // Find and update the matching request
+            for (int i = 0; i < clientRequests.size(); i++) {
+                ConsultationRequest cr = clientRequests.get(i);
+
+                // Match by multiple criteria to ensure we find the right request
+                if (cr.getClientUsername().equals(originalRequest.getClientUsername()) &&
+                        cr.getAdvisorUsername().equals(originalRequest.getAdvisorUsername()) &&
+                        cr.getReason().equals(originalRequest.getReason()) &&
+                        Math.abs(cr.getRequestDate().getTime() - originalRequest.getRequestDate().getTime()) < 1000) { // Within
+                                                                                                                       // 1
+                                                                                                                       // second
+
+                    // Update the status
+                    cr.setStatus(newStatus);
+                    System.out.println("Updated request status for client " + clientUsername +
+                            " to " + newStatus + " with advisor " + originalRequest.getAdvisorName());
+                    break;
+                }
+            }
+
+            // Save the updated client requests
+            saveClientRequests(clientUsername, clientRequests);
+
+        } catch (Exception e) {
+            System.err.println("Error updating client request status for " + clientUsername + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // DebtData class
