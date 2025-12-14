@@ -1305,7 +1305,7 @@ public class FADashboard extends JFrame {
                 return;
             }
 
-            int brickH = 35;
+            int brickH = 50;
             int gap = 5;
             Debt[] debtsArray = auxiliaryDebts.toArray(new Debt[0]);
 
@@ -1315,11 +1315,11 @@ public class FADashboard extends JFrame {
 
                 Color c = new Color(150, 150, 200);
                 g2.setColor(c);
-                int width = 200 + ((debtsArray.length - i - 1) * 15);
+                int width = 200 + ((debtsArray.length - i - 1) * 15 + 20);
 
                 g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 10, 10);
                 g2.setColor(Color.WHITE);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 9));
+                g2.setFont(new Font("SansSerif", Font.BOLD, 12));
 
                 String displayName = d.getName();
                 if (displayName.length() > 25)
@@ -1327,7 +1327,7 @@ public class FADashboard extends JFrame {
                 g2.drawString(displayName, centerX - width / 2 + 10, yPos + 22);
 
                 String balanceText = "$" + (int) d.getCurrentBalance();
-                g2.drawString(balanceText, centerX + width / 2 - 25, yPos + 22);
+                g2.drawString(balanceText, centerX + width / 2 - 50, yPos + 22);
             }
         }
 
@@ -1339,7 +1339,7 @@ public class FADashboard extends JFrame {
                 return;
             }
 
-            int brickH = 30;
+            int brickH = 50;
             int gap = 5;
             Debt[] debtsArray = paidOffDebts.toArray(new Debt[0]);
 
@@ -1349,19 +1349,19 @@ public class FADashboard extends JFrame {
 
                 Color c = new Color(100, 200, 100);
                 g2.setColor(c);
-                int width = 180 + ((debtsArray.length - i - 1) * 10);
+                int width = 180 + ((debtsArray.length - i - 1) * 10 + 20);
 
                 g2.fillRoundRect(centerX - width / 2, yPos, width, brickH, 8, 8);
                 g2.setColor(Color.WHITE);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 8));
+                g2.setFont(new Font("SansSerif", Font.BOLD, 12));
 
                 String displayName = d.getName();
                 if (displayName.length() > 30)
                     displayName = displayName.substring(0, 27) + "...";
                 g2.drawString(displayName, centerX - width / 2 + 5, yPos + 18);
 
-                g2.setFont(new Font("SansSerif", Font.BOLD, 7));
-                g2.drawString("SOLVED", centerX - width / 2 + 5, yPos + 28);
+                g2.setFont(new Font("SansSerif", Font.BOLD, 12));
+                g2.drawString("SOLVED", centerX - width / 2 + 5, yPos + 28 + 10);
             }
         }
     }
