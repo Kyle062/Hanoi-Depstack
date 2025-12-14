@@ -229,7 +229,189 @@ public class UserDashboard extends JFrame {
         pushBtn.addActionListener(e -> pushNewDebt());
         panel.add(pushBtn);
 
+        // Strategy buttons section - VIEW ONLY, doesn't change LIFO order
+        JLabel strategyLabel = new JLabel("View Strategies:");
+        strategyLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        strategyLabel.setBounds(20, 440, 100, 20);
+        panel.add(strategyLabel);
+
+        // Avalanche button - View only
+        JButton avalancheBtn = new JButton("Avalanche View");
+        avalancheBtn.setBounds(20, 465, 150, 30);
+        avalancheBtn.setBackground(new Color(52, 152, 219)); // Blue color
+        avalancheBtn.setForeground(Color.WHITE);
+        avalancheBtn.setFocusPainted(false);
+        avalancheBtn.setBorderPainted(false);
+        avalancheBtn.setFont(new Font("SansSerif", Font.BOLD, 11));
+        avalancheBtn.setToolTipText("Show debts sorted by highest interest rate (View Only)");
+        avalancheBtn.addActionListener(e -> showAvalancheView());
+        panel.add(avalancheBtn);
+
+        // Snowball button - View only
+        JButton snowballBtn = new JButton("Snowball View");
+        snowballBtn.setBounds(180, 465, 150, 30);
+        snowballBtn.setBackground(new Color(46, 204, 113)); // Green color
+        snowballBtn.setForeground(Color.WHITE);
+        snowballBtn.setFocusPainted(false);
+        snowballBtn.setBorderPainted(false);
+        snowballBtn.setFont(new Font("SansSerif", Font.BOLD, 11));
+        snowballBtn.setToolTipText("Show debts sorted by smallest balance (View Only)");
+        snowballBtn.addActionListener(e -> showSnowballView());
+        panel.add(snowballBtn);
+
         return panel;
+    }
+
+    private void showAvalancheView() {
+        ArrayList<Debt> activeDebts = getDebtsForVisualization();
+        logStrategyView("Avalanche");
+        if (activeDebts.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No active debts to display!",
+                    "Avalanche Strategy View",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Create a copy of debts for sorting (doesn't affect actual stack)
+        ArrayList<Debt> sortedDebts = new ArrayList<>(activeDebts);
+
+        // Sort by interest rate (highest first)
+        Collections.sort(sortedDebts, new Comparator<Debt>() {
+            @Override
+            public int compare(Debt d1, Debt d2) {
+                return Double.compare(d2.getInterestRate(), d1.getInterestRate()); // Descending
+            }
+        });
+
+        // Build display message
+        StringBuilder message = new StringBuilder();
+        message.append("AVALANCHE STRATEGY VIEW\n");
+        message.append("=======================\n");
+        message.append("Debts sorted by HIGHEST interest rate first\n");
+        message.append("(This is a VIEW ONLY - Stack remains in LIFO order)\n\n");
+
+        // Current LIFO order
+        message.append("Current LIFO Stack Order (Newest to Oldest):\n");
+        for (int i = 0; i < activeDebts.size(); i++) {
+            Debt debt = activeDebts.get(i);
+            String position = (i == 0) ? "TOS (Newest)" : "Position #" + i;
+            message.append(position).append(": ").append(debt.getName())
+                    .append(" (Int: ").append(debt.getInterestRate()).append("%)\n");
+        }
+
+        message.append("\n----------------------------------------\n\n");
+
+        // Avalanche sorted view
+        message.append("Avalanche Strategy Order (Highest Interest First):\n\n");
+        for (int i = 0; i < sortedDebts.size(); i++) {
+            Debt debt = sortedDebts.get(i);
+            message.append((i + 1)).append(". ").append(debt.getName()).append("\n");
+            message.append("   Interest Rate: ").append(debt.getInterestRate()).append("%\n");
+            message.append("   Balance: $").append(String.format("%.2f", debt.getCurrentBalance())).append("\n");
+            message.append("   Min Payment: $").append(String.format("%.2f", debt.getMinimumPayment())).append("\n");
+
+            // Show LIFO position
+            int lifoPosition = activeDebts.indexOf(debt);
+            String lifoStatus;
+            if (lifoPosition == 0) {
+                lifoStatus = "TOS (Top of Stack)";
+            } else {
+                lifoStatus = "Position #" + lifoPosition + " in LIFO stack";
+            }
+            message.append("   LIFO Status: ").append(lifoStatus).append("\n\n");
+        }
+
+        // Show recommended TOS for avalanche
+        Debt highestInterest = sortedDebts.get(0);
+        message.append("RECOMMENDED by Avalanche:\n");
+        message.append("Focus on: ").append(highestInterest.getName()).append("\n");
+        message.append("Highest interest rate: ").append(highestInterest.getInterestRate()).append("%\n");
+        message.append("Current LIFO TOS: ").append(activeDebts.get(0).getName()).append("\n");
+
+        JOptionPane.showMessageDialog(this,
+                message.toString(),
+                "Avalanche Strategy View (Highest Interest First)",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showSnowballView() {
+        ArrayList<Debt> activeDebts = getDebtsForVisualization();
+        logStrategyView("Snowball");
+        if (activeDebts.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No active debts to display!",
+                    "Snowball Strategy View",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Create a copy of debts for sorting (doesn't affect actual stack)
+        ArrayList<Debt> sortedDebts = new ArrayList<>(activeDebts);
+
+        // Sort by balance (smallest first)
+        Collections.sort(sortedDebts, new Comparator<Debt>() {
+            @Override
+            public int compare(Debt d1, Debt d2) {
+                return Double.compare(d1.getCurrentBalance(), d2.getCurrentBalance()); // Ascending
+            }
+        });
+
+        // Build display message
+        StringBuilder message = new StringBuilder();
+        message.append("SNOWBALL STRATEGY VIEW\n");
+        message.append("======================\n");
+        message.append("Debts sorted by SMALLEST balance first\n");
+        message.append("(This is a VIEW ONLY - Stack remains in LIFO order)\n\n");
+
+        // Current LIFO order
+        message.append("Current LIFO Stack Order (Newest to Oldest):\n");
+        for (int i = 0; i < activeDebts.size(); i++) {
+            Debt debt = activeDebts.get(i);
+            String position = (i == 0) ? "TOS (Newest)" : "Position #" + i;
+            message.append(position).append(": ").append(debt.getName())
+                    .append(" (Bal: $").append(String.format("%.2f", debt.getCurrentBalance())).append(")\n");
+        }
+
+        message.append("\n----------------------------------------\n\n");
+
+        // Snowball sorted view
+        message.append("Snowball Strategy Order (Smallest Balance First):\n\n");
+        for (int i = 0; i < sortedDebts.size(); i++) {
+            Debt debt = sortedDebts.get(i);
+            message.append((i + 1)).append(". ").append(debt.getName()).append("\n");
+            message.append("   Balance: $").append(String.format("%.2f", debt.getCurrentBalance())).append("\n");
+            message.append("   Interest Rate: ").append(debt.getInterestRate()).append("%\n");
+            message.append("   Min Payment: $").append(String.format("%.2f", debt.getMinimumPayment())).append("\n");
+
+            // Show LIFO position
+            int lifoPosition = activeDebts.indexOf(debt);
+            String lifoStatus;
+            if (lifoPosition == 0) {
+                lifoStatus = "TOS (Top of Stack)";
+            } else {
+                lifoStatus = "Position #" + lifoPosition + " in LIFO stack";
+            }
+            message.append("   LIFO Status: ").append(lifoStatus).append("\n\n");
+        }
+
+        // Show recommended TOS for snowball
+        Debt smallestBalance = sortedDebts.get(0);
+        message.append("RECOMMENDED by Snowball:\n");
+        message.append("Focus on: ").append(smallestBalance.getName()).append("\n");
+        message.append("Smallest balance: $").append(String.format("%.2f", smallestBalance.getCurrentBalance()))
+                .append("\n");
+        message.append("Current LIFO TOS: ").append(activeDebts.get(0).getName()).append("\n");
+
+        JOptionPane.showMessageDialog(this,
+                message.toString(),
+                "Snowball Strategy View (Smallest Balance First)",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void logStrategyView(String strategyName) {
+        log("VIEWED: " + strategyName + " strategy (View only - LIFO unchanged)");
+        addEventToCalendar("Viewed " + strategyName + " debt strategy");
     }
 
     private JPanel createPaymentPanel() {
