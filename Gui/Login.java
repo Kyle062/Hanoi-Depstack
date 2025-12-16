@@ -107,14 +107,7 @@ public class Login extends JFrame {
         passwordField.setBounds(FRAME_WIDTH / 2 + -339, 437, 320, 37);
         backgroundPanel.add(passwordField, 0);
 
-        // Forgot Password Link on right side
-        JLabel forgotPass = new JLabel("<html><u>Forgot Password?</u></html>", SwingConstants.RIGHT);
-        forgotPass.setFont(new Font("Arial", Font.ITALIC, 10));
-        forgotPass.setBounds(FRAME_WIDTH / 2 + -310, 480, 300, 15);
-        forgotPass.setForeground(new Color(255, 120, 0));
-        forgotPass.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        backgroundPanel.add(forgotPass, 0);
-
+      
         // Login Button on right side
         JButton loginButton = new JButton("LOGIN");
         loginButton.setBounds(FRAME_WIDTH / 2 + -284, 545, 200, 40);
