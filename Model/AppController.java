@@ -5,6 +5,42 @@ import java.util.Map;
 import java.util.ArrayList;
 
 public class AppController {
+
+    // ===========================
+    // Constructor and Initialization Methods - Methods for initializing the application and setting up default data
+    // ===========================
+    // AppController() - Constructor that initializes the controller, loads users
+    // from storage, and creates test users if they don't exist
+
+    // ===========================
+    // Authentication Methods - Methods for user login, registration, and logout
+    // operations
+    // ===========================
+    // login(String username, String password) - Authenticates user, loads debts if
+    // successful
+    // register(String full, String email, String username, String pass, String
+    // userType) - Registers new user with specified type
+    // register(String full, String email, String username, String pass) - Registers
+    // new user as debtor (default)
+    // logout() - Logs out user, saves debts, resets debt manager
+
+    // ===========================
+    // User Management Methods - Methods for accessing and checking current user information
+    // ===========================
+    // getCurrentUser() - Returns currently logged-in user object
+    // getCurrentUserType() - Returns user type (ADVISOR/DEBTOR) of current user
+    // getCurrentUsername() - Returns username of currently logged-in user
+    // isAdvisor() - Checks if current user is financial advisor
+    // isDebtor() - Checks if current user is debtor
+
+    // ===========================
+    // Debt Management Methods - Methods for managing and persisting user debt data
+    // ===========================
+    // getManager() - Returns DebtManager instance for debt operations
+    // saveUserDebts() - Saves current user's debts to storage
+    // loadUserDebts(String username) - Loads user's debts from storage (private)
+    // saveAllData() - Saves all application data including users and debts
+
     private Map<String, User> users;
     private DebtManager debtManager = new DebtManager();
     private User currentUser;

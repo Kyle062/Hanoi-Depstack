@@ -4,6 +4,79 @@ import java.io.Serializable;
 import java.util.*;
 
 public class DebtManager implements Serializable {
+
+    // ===========================
+    // Constructor and Initialization Methods - Methods for initializing the
+    // application and setting up default data
+    // ===========================
+    // AppController() - Constructor that initializes the controller, loads users
+    // from storage, and creates test users if they don't exist
+
+    // ===========================
+    // Authentication Methods - Methods for user login, registration, and logout
+    // operations
+    // ===========================
+    // login(String username, String password) - Authenticates user, loads debts if
+    // successful
+    // register(String full, String email, String username, String pass, String
+    // userType) - Registers new user with specified type
+    // register(String full, String email, String username, String pass) - Registers
+    // new user as debtor (default)
+    // logout() - Logs out user, saves debts, resets debt manager
+
+    // ===========================
+    // User Management Methods - Methods for accessing and checking current user
+    // information
+    // ===========================
+    // getCurrentUser() - Returns currently logged-in user object
+    // getCurrentUserType() - Returns user type (ADVISOR/DEBTOR) of current user
+    // getCurrentUsername() - Returns username of currently logged-in user
+    // isAdvisor() - Checks if current user is financial advisor
+    // isDebtor() - Checks if current user is debtor
+
+    // ===========================
+    // Debt Management Methods - Methods for managing and persisting user debt data
+    // ===========================
+    // getManager() - Returns DebtManager instance for debt operations
+    // saveUserDebts() - Saves current user's debts to storage
+    // loadUserDebts(String username) - Loads user's debts from storage (private)
+    // saveAllData() - Saves all application data including users and debts
+
+    // ===========================
+    // Debt Stack Operations - Methods for managing the debt stack (LIFO structure)
+    // ===========================
+    // pushDebt(Debt debt) - Adds a new debt to the top of the stack, applies
+    // strategy if not LIFO
+    // popDebt() - Removes and returns the top debt from the stack
+    // moveToPaidOff(Debt d) - Transfers a debt from active stack to paid-off
+    // history list
+    // peekTOS() - Returns the top debt without removing it from stack
+
+    // ===========================
+    // Data Retrieval Methods - Methods for getting debt data for display
+    // ===========================
+    // getStackForVisualization() - Returns all active debts as ArrayList for
+    // visualization
+    // getPaidOffForVisualization() - Returns all paid-off debts as ArrayList for
+    // display
+    // getMaxDebtAmount() - Returns the highest debt amount for scaling
+    // visualizations
+
+    // ===========================
+    // Strategy Management - Methods for controlling debt repayment strategies
+    // ===========================
+    // setStrategy(Strategy strategy) - Changes the current debt repayment strategy
+    // getStrategy() - Returns the currently active debt repayment strategy
+    // applyStrategy() - Private method that sorts debts based on active strategy
+    // (except LIFO)
+    // reorderForLIFO() - Ensures stack maintains LIFO order for LIFO strategy
+
+    // ===========================
+    // Debug and Utility Methods - Helper methods for testing and debugging
+    // ===========================
+    // getStackOrderDebug() - Returns formatted string showing current stack order
+    // for debugging
+
     private static final long serialVersionUID = 1L;
     private Stack<Debt> debtStack = new Stack<>();
     // New list to track history for the "Paid Off" pillar

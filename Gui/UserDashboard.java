@@ -13,6 +13,123 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class UserDashboard extends JFrame {
+    // ===========================
+    // Dashboard Constructor and Initialization - Methods for creating and setting
+    // up the User dashboard
+    // ===========================
+    // UserDashboard(AppController controller) - Constructor that creates the client
+    // dashboard UI
+    // initUI() - Sets up the main user interface components and layout
+    // setupBackground() - Loads and sets the background image for the dashboard
+    // createSidebar() - Creates the navigation sidebar with action buttons
+    // createTopRow() - Creates the top row containing tower visualization and add
+    // debt panel
+    // createBottomRow() - Creates the bottom row with card, payment, and calendar
+    // panels
+    // createLogsPanel() - Creates the operation logs panel at the bottom
+    // refreshAll() - Refreshes all UI components and updates display
+
+    // ===========================
+    // Panel Creation Methods - Methods for creating individual UI panels
+    // ===========================
+    // createAddDebtPanel() - Creates the panel for adding new debts to the stack
+    // createPaymentPanel() - Creates the panel for making debt payments
+    // createCardPanel() - Creates the debt details card showing TOS information
+    // createEventCalendarPanel() - Creates the event calendar panel for tracking
+    // due dates
+    // updateCreditCardPanel() - Updates the card panel with current TOS debt
+    // details
+
+    // ===========================
+    // Sidebar Action Methods - Action methods for sidebar button clicks
+    // ==========================
+    // showConsultationDialog() - Shows dialog to request financial advisor
+    // consultation
+    // showMyRequests() - Displays user's consultation requests and their status
+    // onPeekClicked() - Shows details of current TOS (Top of Stack) debt
+    // onUpdateClicked() - Allows updating debt details (newly added)
+    // onTraversalClicked() - Allows searching and filtering debts (newly added)
+    // onSettleClicked() - Makes payment on current TOS debt
+    // onHistoryClicked() - Toggles visibility of operation logs
+    // onDeleteClicked() - Deletes current TOS debt with confirmation
+    // onProfileClicked() - Displays user profile information
+    // onAuxiliary() - Moves TOS debt to auxiliary stack with password verification
+    // logout() - Logs out user and returns to login screen
+
+    // ===========================
+    // Debt Management Methods - Methods for managing debt operations
+    // ===========================
+    // pushNewDebt() - Adds new debt to the top of the stack (TOS)
+    // makePayment() - Processes payment on current TOS debt
+    // searchDebtByName() - Searches for debts by name (partial match)
+    // filterByAmountRange() - Filters debts by balance range
+    // filterByInterestRate() - Filters debts by interest rate range
+    // showAllDebts() - Displays all debts across all stacks
+    // displayFilterResults() - Displays results of debt filtering
+    // getDebtLocation() - Returns which stack a debt belongs to
+
+    // ===========================
+    // Strategy View Methods - Methods for viewing different debt repayment
+    // strategies
+    // ===========================
+    // showAvalancheView() - Shows debts sorted by highest interest rate (view only)
+    // showSnowballView() - Shows debts sorted by smallest balance (view only)
+    // logStrategyView() - Logs strategy view actions
+
+    // ===========================
+    // UI Helper Methods - Utility methods for user interface components
+    // ===========================
+    // createIconButton() - Creates styled sidebar icon buttons
+    // addLabel() - Helper method to add labels to panels
+    // addTextField() - Helper method to add text fields to panels
+    // createOrangeButton() - Creates orange-colored action buttons
+    // styleQuickButton() - Styles quick action buttons
+    // addEventToCalendar() - Adds event to the calendar display
+    // log() - Adds message to operation logs
+    // getTopName() - Returns name of current TOS debt
+    // refreshConsultationRequests() - Refreshes consultation request data
+
+    // ===========================
+    // Consultation Request Methods - Methods for handling consultation requests
+    // ===========================
+    // createRequestPanel() - Creates panel for displaying consultation request
+    // details
+
+    // ===========================
+    // Data Retrieval Methods - Methods for getting debt data
+    // ===========================
+    // getDebtsForVisualization() - Returns debts in proper LIFO order for
+    // visualization
+    // getAllDebts() - Returns all debts from all stacks
+    // getStackOrderDebug() - Returns formatted string showing current stack order
+    // for debugging
+
+    // ===========================
+    // Tower Visualization Methods - Methods for drawing the debt tower
+    // visualization
+    // ===========================
+    // TowerVisualizationPanel() - Constructor for tower visualization panel
+    // paintComponent() - Main painting method for tower visualization
+    // drawActiveStack() - Draws active debt pillar (main stack)
+    // drawAuxiliaryStack() - Draws auxiliary debt pillar
+    // drawPaidOffStack() - Draws paid-off debt pillar
+
+    // ===========================
+    // Custom UI Components - Custom Swing components used in the dashboard
+    // ===========================
+    // RoundedPanel(int, Color) - Custom panel with rounded corners
+    // paintComponent(Graphics) - RoundedPanel's painting method
+
+    // ===========================
+    // Utility and Helper Methods - Additional helper methods
+    // ===========================
+    // getUniqueClientCount() - Calculates number of unique clients from debt data
+    // loadAppointmentSchedule() - Loads and displays scheduled appointments
+    // updateAnalytics() - Updates all analytics statistics on the dashboard
+    // showError() - Displays error message dialog
+    // refreshTowerVisualization() - Refreshes the tower visualization display
+    // createStatPanelWithData() - Creates statistics panel with value label
+
     private AppController controller;
     private DebtManager manager;
     private ArrayList<Debt> auxiliaryDebts = new ArrayList<>();
@@ -104,15 +221,15 @@ public class UserDashboard extends JFrame {
         sidebar.add(createIconButton("Consultation", "Request Consultation", e -> showConsultationDialog()));
         sidebar.add(createIconButton("My Requests", "View My Requests", e -> showMyRequests()));
         sidebar.add(createIconButton("PEEK", "View Top", e -> onPeekClicked()));
-        
+
         // New UPDATE button
         sidebar.add(createIconButton("UPDATE", "Update Debt Details", e -> onUpdateClicked()));
-        
+
         sidebar.add(createIconButton("PAY", "Settle", e -> onSettleClicked()));
-        
+
         // New TRAVERSAL button
         sidebar.add(createIconButton("SEARCH", "Search & Filter Debts", e -> onTraversalClicked()));
-        
+
         sidebar.add(createIconButton("HISTORY", "History", e -> onHistoryClicked()));
         sidebar.add(createIconButton("DELETE", "Delete", e -> onDeleteClicked()));
         sidebar.add(createIconButton("PROFILE", "Profile", e -> onProfileClicked()));
@@ -1024,17 +1141,17 @@ public class UserDashboard extends JFrame {
                 "Enter the name of the debt you want to update:",
                 "Update Debt",
                 JOptionPane.QUESTION_MESSAGE);
-        
+
         if (debtName == null || debtName.trim().isEmpty()) {
             return; // User cancelled or entered empty
         }
-        
+
         debtName = debtName.trim();
-        
+
         // Search for the debt in all stacks
         Debt foundDebt = null;
         String debtLocation = "";
-        
+
         // Search in active stack
         ArrayList<Debt> activeDebts = getDebtsForVisualization();
         for (Debt debt : activeDebts) {
@@ -1044,7 +1161,7 @@ public class UserDashboard extends JFrame {
                 break;
             }
         }
-        
+
         // Search in auxiliary stack
         if (foundDebt == null) {
             for (Debt debt : auxiliaryDebts) {
@@ -1055,7 +1172,7 @@ public class UserDashboard extends JFrame {
                 }
             }
         }
-        
+
         // Search in paid-off stack
         if (foundDebt == null) {
             for (Debt debt : paidOffDebts) {
@@ -1066,7 +1183,7 @@ public class UserDashboard extends JFrame {
                 }
             }
         }
-        
+
         if (foundDebt == null) {
             JOptionPane.showMessageDialog(this,
                     "Debt with name '" + debtName + "' not found in any stack.",
@@ -1074,34 +1191,34 @@ public class UserDashboard extends JFrame {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         // Show current details
         JOptionPane.showMessageDialog(this,
                 "Found Debt Details:\n" +
-                "Name: " + foundDebt.getName() + "\n" +
-                "Location: " + debtLocation + "\n" +
-                "Current Balance: $" + String.format("%.2f", foundDebt.getCurrentBalance()) + "\n" +
-                "Interest Rate: " + foundDebt.getInterestRate() + "%\n" +
-                "Minimum Payment: $" + String.format("%.2f", foundDebt.getMinimumPayment()) + "\n" +
-                "Original Amount: $" + String.format("%.2f", foundDebt.getOriginalAmount()),
+                        "Name: " + foundDebt.getName() + "\n" +
+                        "Location: " + debtLocation + "\n" +
+                        "Current Balance: $" + String.format("%.2f", foundDebt.getCurrentBalance()) + "\n" +
+                        "Interest Rate: " + foundDebt.getInterestRate() + "%\n" +
+                        "Minimum Payment: $" + String.format("%.2f", foundDebt.getMinimumPayment()) + "\n" +
+                        "Original Amount: $" + String.format("%.2f", foundDebt.getOriginalAmount()),
                 "Current Debt Details",
                 JOptionPane.INFORMATION_MESSAGE);
-        
+
         // Create update dialog
         JPanel updatePanel = new JPanel(new GridLayout(4, 2, 5, 5));
-        
+
         JLabel newBalanceLabel = new JLabel("New Balance ($):");
         JTextField newBalanceField = new JTextField(String.format("%.2f", foundDebt.getCurrentBalance()));
-        
+
         JLabel newInterestLabel = new JLabel("New Interest Rate (%):");
         JTextField newInterestField = new JTextField(String.format("%.1f", foundDebt.getInterestRate()));
-        
+
         JLabel newMinPaymentLabel = new JLabel("New Minimum Payment ($):");
         JTextField newMinPaymentField = new JTextField(String.format("%.2f", foundDebt.getMinimumPayment()));
-        
+
         JLabel newNameLabel = new JLabel("New Name (optional):");
         JTextField newNameField = new JTextField(foundDebt.getName());
-        
+
         updatePanel.add(newBalanceLabel);
         updatePanel.add(newBalanceField);
         updatePanel.add(newInterestLabel);
@@ -1110,13 +1227,13 @@ public class UserDashboard extends JFrame {
         updatePanel.add(newMinPaymentField);
         updatePanel.add(newNameLabel);
         updatePanel.add(newNameField);
-        
+
         int result = JOptionPane.showConfirmDialog(this,
                 updatePanel,
                 "Update Debt Details",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE);
-        
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 // Get new values
@@ -1124,30 +1241,29 @@ public class UserDashboard extends JFrame {
                 double newInterest = Double.parseDouble(newInterestField.getText().trim());
                 double newMinPayment = Double.parseDouble(newMinPaymentField.getText().trim());
                 String newName = newNameField.getText().trim();
-                
+
                 // Validate
                 if (newBalance < 0 || newInterest < 0 || newMinPayment < 0) {
                     throw new NumberFormatException("Negative values not allowed");
                 }
-                
+
                 // Update debt (Note: Debt class needs setters for this to work)
                 // Since Debt class doesn't have setters, we need to create a new debt
                 // and replace the old one in the appropriate stack
-                
+
                 // Create updated debt
                 Debt updatedDebt = new Debt(
-                    newName.isEmpty() ? foundDebt.getName() : newName,
-                    newBalance,
-                    newInterest,
-                    newMinPayment
-                );
-                
+                        newName.isEmpty() ? foundDebt.getName() : newName,
+                        newBalance,
+                        newInterest,
+                        newMinPayment);
+
                 // Replace in appropriate stack
                 if (debtLocation.equals("Active Stack")) {
                     // Find and replace in active stack
                     Stack<Debt> tempStack = new Stack<>();
                     boolean replaced = false;
-                    
+
                     // Pop until we find the debt
                     while (!manager.getStackForVisualization().isEmpty()) {
                         Debt current = manager.popDebt();
@@ -1159,12 +1275,12 @@ public class UserDashboard extends JFrame {
                             tempStack.push(current);
                         }
                     }
-                    
+
                     // Push everything back
                     while (!tempStack.isEmpty()) {
                         manager.pushDebt(tempStack.pop());
                     }
-                    
+
                     if (!replaced) {
                         // Try to find in the visualization list
                         for (int i = 0; i < activeDebts.size(); i++) {
@@ -1192,25 +1308,25 @@ public class UserDashboard extends JFrame {
                         }
                     }
                 }
-                
+
                 log("UPDATED: Debt '" + foundDebt.getName() + "' updated in " + debtLocation);
                 addEventToCalendar("Updated debt: " + foundDebt.getName() + " in " + debtLocation);
-                
+
                 JOptionPane.showMessageDialog(this,
                         "Debt updated successfully!\n" +
-                        "Location: " + debtLocation + "\n" +
-                        "New Balance: $" + String.format("%.2f", newBalance) + "\n" +
-                        "New Interest Rate: " + newInterest + "%\n" +
-                        "New Minimum Payment: $" + String.format("%.2f", newMinPayment),
+                                "Location: " + debtLocation + "\n" +
+                                "New Balance: $" + String.format("%.2f", newBalance) + "\n" +
+                                "New Interest Rate: " + newInterest + "%\n" +
+                                "New Minimum Payment: $" + String.format("%.2f", newMinPayment),
                         "Update Successful",
                         JOptionPane.INFORMATION_MESSAGE);
-                
+
                 refreshAll();
-                
+
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this,
                         "Please enter valid numbers for all fields.\n" +
-                        "All values must be non-negative.",
+                                "All values must be non-negative.",
                         "Invalid Input",
                         JOptionPane.ERROR_MESSAGE);
             } catch (Exception e) {
@@ -1224,7 +1340,8 @@ public class UserDashboard extends JFrame {
 
     private void onTraversalClicked() {
         // Show options for search or filter
-        String[] options = {"Search Debt by Name", "Filter by Amount Range", "Filter by Interest Rate", "Show All Debts"};
+        String[] options = { "Search Debt by Name", "Filter by Amount Range", "Filter by Interest Rate",
+                "Show All Debts" };
         int choice = JOptionPane.showOptionDialog(this,
                 "Choose traversal method:",
                 "Debt Search & Filter",
@@ -1233,9 +1350,10 @@ public class UserDashboard extends JFrame {
                 null,
                 options,
                 options[0]);
-        
-        if (choice == -1) return; // User cancelled
-        
+
+        if (choice == -1)
+            return; // User cancelled
+
         switch (choice) {
             case 0: // Search by name
                 searchDebtByName();
@@ -1251,27 +1369,27 @@ public class UserDashboard extends JFrame {
                 break;
         }
     }
-    
+
     private void searchDebtByName() {
         String searchTerm = JOptionPane.showInputDialog(this,
                 "Enter debt name to search (partial names allowed):",
                 "Search Debt",
                 JOptionPane.QUESTION_MESSAGE);
-        
+
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             return;
         }
-        
+
         searchTerm = searchTerm.trim().toLowerCase();
         ArrayList<Debt> allDebts = getAllDebts();
         ArrayList<Debt> foundDebts = new ArrayList<>();
-        
+
         for (Debt debt : allDebts) {
             if (debt.getName().toLowerCase().contains(searchTerm)) {
                 foundDebts.add(debt);
             }
         }
-        
+
         if (foundDebts.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "No debts found matching: " + searchTerm,
@@ -1279,13 +1397,13 @@ public class UserDashboard extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         // Display results
         StringBuilder result = new StringBuilder();
         result.append("Search Results for '").append(searchTerm).append("':\n");
         result.append("================================\n\n");
         result.append("Found ").append(foundDebts.size()).append(" debt(s):\n\n");
-        
+
         for (int i = 0; i < foundDebts.size(); i++) {
             Debt debt = foundDebts.get(i);
             result.append(i + 1).append(". ").append(debt.getName()).append("\n");
@@ -1294,141 +1412,142 @@ public class UserDashboard extends JFrame {
             result.append("   Min Payment: $").append(String.format("%.2f", debt.getMinimumPayment())).append("\n");
             result.append("   Location: ").append(getDebtLocation(debt)).append("\n\n");
         }
-        
+
         JTextArea textArea = new JTextArea(result.toString());
         textArea.setEditable(false);
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
+
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(500, 400));
-        
+
         JOptionPane.showMessageDialog(this,
                 scrollPane,
                 "Search Results",
                 JOptionPane.INFORMATION_MESSAGE);
-        
-        log("SEARCH: Searched for debt name containing '" + searchTerm + "' - Found " + foundDebts.size() + " result(s)");
+
+        log("SEARCH: Searched for debt name containing '" + searchTerm + "' - Found " + foundDebts.size()
+                + " result(s)");
     }
-    
+
     private void filterByAmountRange() {
         JPanel filterPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        
+
         JLabel minLabel = new JLabel("Minimum Amount ($):");
         JTextField minField = new JTextField("0.00");
-        
+
         JLabel maxLabel = new JLabel("Maximum Amount ($):");
         JTextField maxField = new JTextField("1000000.00");
-        
+
         filterPanel.add(minLabel);
         filterPanel.add(minField);
         filterPanel.add(maxLabel);
         filterPanel.add(maxField);
-        
+
         int result = JOptionPane.showConfirmDialog(this,
                 filterPanel,
                 "Filter by Amount Range",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE);
-        
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 double minAmount = Double.parseDouble(minField.getText().trim());
                 double maxAmount = Double.parseDouble(maxField.getText().trim());
-                
+
                 if (minAmount < 0 || maxAmount < 0 || minAmount > maxAmount) {
                     throw new NumberFormatException("Invalid range");
                 }
-                
+
                 ArrayList<Debt> allDebts = getAllDebts();
                 ArrayList<Debt> filteredDebts = new ArrayList<>();
-                
+
                 for (Debt debt : allDebts) {
                     double balance = debt.getCurrentBalance();
                     if (balance >= minAmount && balance <= maxAmount) {
                         filteredDebts.add(debt);
                     }
                 }
-                
-                displayFilterResults(filteredDebts, 
-                    "Amount Range: $" + String.format("%.2f", minAmount) + 
-                    " to $" + String.format("%.2f", maxAmount));
-                
-                log("FILTER: Filtered debts by amount range $" + 
-                    String.format("%.2f", minAmount) + " to $" + 
-                    String.format("%.2f", maxAmount) + " - Found " + 
-                    filteredDebts.size() + " result(s)");
-                
+
+                displayFilterResults(filteredDebts,
+                        "Amount Range: $" + String.format("%.2f", minAmount) +
+                                " to $" + String.format("%.2f", maxAmount));
+
+                log("FILTER: Filtered debts by amount range $" +
+                        String.format("%.2f", minAmount) + " to $" +
+                        String.format("%.2f", maxAmount) + " - Found " +
+                        filteredDebts.size() + " result(s)");
+
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this,
                         "Please enter valid numbers for amount range.\n" +
-                        "Minimum must be less than or equal to maximum.",
+                                "Minimum must be less than or equal to maximum.",
                         "Invalid Input",
                         JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-    
+
     private void filterByInterestRate() {
         JPanel filterPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        
+
         JLabel minLabel = new JLabel("Minimum Interest Rate (%):");
         JTextField minField = new JTextField("0.0");
-        
+
         JLabel maxLabel = new JLabel("Maximum Interest Rate (%):");
         JTextField maxField = new JTextField("100.0");
-        
+
         filterPanel.add(minLabel);
         filterPanel.add(minField);
         filterPanel.add(maxLabel);
         filterPanel.add(maxField);
-        
+
         int result = JOptionPane.showConfirmDialog(this,
                 filterPanel,
                 "Filter by Interest Rate",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE);
-        
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 double minRate = Double.parseDouble(minField.getText().trim());
                 double maxRate = Double.parseDouble(maxField.getText().trim());
-                
+
                 if (minRate < 0 || maxRate < 0 || minRate > maxRate) {
                     throw new NumberFormatException("Invalid range");
                 }
-                
+
                 ArrayList<Debt> allDebts = getAllDebts();
                 ArrayList<Debt> filteredDebts = new ArrayList<>();
-                
+
                 for (Debt debt : allDebts) {
                     double rate = debt.getInterestRate();
                     if (rate >= minRate && rate <= maxRate) {
                         filteredDebts.add(debt);
                     }
                 }
-                
+
                 displayFilterResults(filteredDebts,
-                    "Interest Rate Range: " + String.format("%.1f", minRate) + 
-                    "% to " + String.format("%.1f", maxRate) + "%");
-                
-                log("FILTER: Filtered debts by interest rate " + 
-                    String.format("%.1f", minRate) + "% to " + 
-                    String.format("%.1f", maxRate) + "% - Found " + 
-                    filteredDebts.size() + " result(s)");
-                
+                        "Interest Rate Range: " + String.format("%.1f", minRate) +
+                                "% to " + String.format("%.1f", maxRate) + "%");
+
+                log("FILTER: Filtered debts by interest rate " +
+                        String.format("%.1f", minRate) + "% to " +
+                        String.format("%.1f", maxRate) + "% - Found " +
+                        filteredDebts.size() + " result(s)");
+
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this,
                         "Please enter valid numbers for interest rate range.\n" +
-                        "Minimum must be less than or equal to maximum.",
+                                "Minimum must be less than or equal to maximum.",
                         "Invalid Input",
                         JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-    
+
     private void showAllDebts() {
         ArrayList<Debt> allDebts = getAllDebts();
-        
+
         if (allDebts.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "No debts found in any stack.",
@@ -1436,18 +1555,18 @@ public class UserDashboard extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         // Group by location
         ArrayList<Debt> activeDebts = getDebtsForVisualization();
         ArrayList<Debt> auxiliaryDebtsList = auxiliaryDebts;
         ArrayList<Debt> paidOffDebtsList = paidOffDebts;
-        
+
         StringBuilder result = new StringBuilder();
         result.append("ALL DEBTS - COMPLETE OVERVIEW\n");
         result.append("=============================\n\n");
-        
+
         result.append("TOTAL DEBTS: ").append(allDebts.size()).append("\n\n");
-        
+
         // Active Debts
         result.append("ACTIVE DEBTS (").append(activeDebts.size()).append("):\n");
         result.append("-----------------\n");
@@ -1462,7 +1581,7 @@ public class UserDashboard extends JFrame {
                 result.append("     Position: ").append(i == 0 ? "TOS (Newest)" : "#" + i + " from top").append("\n\n");
             }
         }
-        
+
         // Auxiliary Debts
         result.append("AUXILIARY DEBTS (").append(auxiliaryDebtsList.size()).append("):\n");
         result.append("--------------------\n");
@@ -1476,7 +1595,7 @@ public class UserDashboard extends JFrame {
                 result.append("     Interest: ").append(debt.getInterestRate()).append("%\n\n");
             }
         }
-        
+
         // Paid-Off Debts
         result.append("PAID-OFF DEBTS (").append(paidOffDebtsList.size()).append("):\n");
         result.append("-------------------\n");
@@ -1490,34 +1609,36 @@ public class UserDashboard extends JFrame {
                 result.append("     Status: PAID OFF\n\n");
             }
         }
-        
+
         // Summary
         double totalActiveBalance = activeDebts.stream().mapToDouble(Debt::getCurrentBalance).sum();
         double totalAuxiliaryBalance = auxiliaryDebtsList.stream().mapToDouble(Debt::getCurrentBalance).sum();
         double totalOriginalPaid = paidOffDebtsList.stream().mapToDouble(Debt::getOriginalAmount).sum();
-        
+
         result.append("\nSUMMARY:\n");
         result.append("--------\n");
         result.append("Total Active Balance: $").append(String.format("%.2f", totalActiveBalance)).append("\n");
         result.append("Total Auxiliary Balance: $").append(String.format("%.2f", totalAuxiliaryBalance)).append("\n");
         result.append("Total Paid Off Amount: $").append(String.format("%.2f", totalOriginalPaid)).append("\n");
-        result.append("Grand Total (All Debts): $").append(String.format("%.2f", totalActiveBalance + totalAuxiliaryBalance + totalOriginalPaid)).append("\n");
-        
+        result.append("Grand Total (All Debts): $")
+                .append(String.format("%.2f", totalActiveBalance + totalAuxiliaryBalance + totalOriginalPaid))
+                .append("\n");
+
         JTextArea textArea = new JTextArea(result.toString());
         textArea.setEditable(false);
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
+
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(600, 500));
-        
+
         JOptionPane.showMessageDialog(this,
                 scrollPane,
                 "All Debts Overview",
                 JOptionPane.INFORMATION_MESSAGE);
-        
+
         log("TRAVERSAL: Viewed all debts - Total: " + allDebts.size());
     }
-    
+
     private void displayFilterResults(ArrayList<Debt> filteredDebts, String filterCriteria) {
         if (filteredDebts.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -1526,39 +1647,41 @@ public class UserDashboard extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         StringBuilder result = new StringBuilder();
         result.append("FILTER RESULTS\n");
         result.append("==============\n");
         result.append("Filter: ").append(filterCriteria).append("\n");
         result.append("Found ").append(filteredDebts.size()).append(" debt(s):\n\n");
-        
+
         // Group by location for better organization
         Map<String, ArrayList<Debt>> groupedDebts = new LinkedHashMap<>();
         groupedDebts.put("Active Stack", new ArrayList<>());
         groupedDebts.put("Auxiliary Stack", new ArrayList<>());
         groupedDebts.put("Paid-Off Stack", new ArrayList<>());
-        
+
         for (Debt debt : filteredDebts) {
             String location = getDebtLocation(debt);
             groupedDebts.get(location).add(debt);
         }
-        
+
         for (Map.Entry<String, ArrayList<Debt>> entry : groupedDebts.entrySet()) {
             String location = entry.getKey();
             ArrayList<Debt> debts = entry.getValue();
-            
+
             if (!debts.isEmpty()) {
                 result.append(location).append(" (").append(debts.size()).append("):\n");
                 result.append("-".repeat(location.length() + 4)).append("\n");
-                
+
                 for (int i = 0; i < debts.size(); i++) {
                     Debt debt = debts.get(i);
                     result.append("  ").append(i + 1).append(". ").append(debt.getName()).append("\n");
-                    result.append("     Balance: $").append(String.format("%.2f", debt.getCurrentBalance())).append("\n");
+                    result.append("     Balance: $").append(String.format("%.2f", debt.getCurrentBalance()))
+                            .append("\n");
                     result.append("     Interest: ").append(debt.getInterestRate()).append("%\n");
-                    result.append("     Min Payment: $").append(String.format("%.2f", debt.getMinimumPayment())).append("\n");
-                    
+                    result.append("     Min Payment: $").append(String.format("%.2f", debt.getMinimumPayment()))
+                            .append("\n");
+
                     if (location.equals("Active Stack")) {
                         // Find position in active stack
                         ArrayList<Debt> activeDebts = getDebtsForVisualization();
@@ -1574,20 +1697,20 @@ public class UserDashboard extends JFrame {
                 result.append("\n");
             }
         }
-        
+
         JTextArea textArea = new JTextArea(result.toString());
         textArea.setEditable(false);
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
+
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(550, 450));
-        
+
         JOptionPane.showMessageDialog(this,
                 scrollPane,
                 "Filter Results: " + filterCriteria,
                 JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     private ArrayList<Debt> getAllDebts() {
         ArrayList<Debt> allDebts = new ArrayList<>();
         allDebts.addAll(getDebtsForVisualization());
@@ -1595,7 +1718,7 @@ public class UserDashboard extends JFrame {
         allDebts.addAll(paidOffDebts);
         return allDebts;
     }
-    
+
     private String getDebtLocation(Debt debt) {
         ArrayList<Debt> activeDebts = getDebtsForVisualization();
         if (activeDebts.contains(debt)) {
@@ -1616,17 +1739,17 @@ public class UserDashboard extends JFrame {
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(new JLabel("Enter your password to move debt to auxiliary:"), BorderLayout.NORTH);
             panel.add(passwordField, BorderLayout.CENTER);
-            
+
             int option = JOptionPane.showConfirmDialog(this,
                     panel,
                     "Password Verification",
                     JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
-            
+
             if (option == JOptionPane.OK_OPTION) {
                 String enteredPassword = new String(passwordField.getPassword());
                 User currentUser = controller.getCurrentUser();
-                
+
                 if (currentUser != null && enteredPassword.equals(currentUser.getPassword())) {
                     // Password correct, proceed with move
                     int confirm = JOptionPane.showConfirmDialog(this,
@@ -1641,14 +1764,15 @@ public class UserDashboard extends JFrame {
                         log("MOVED: " + movedDebt.getName() + " from TOS to auxiliary (Password verified)");
 
                         Debt newTOS = manager.peekTOS();
-                        tosLabel.setText("Current TOS: " + (newTOS != null ? newTOS.getName() + " (Position: TOS)" : "None"));
+                        tosLabel.setText(
+                                "Current TOS: " + (newTOS != null ? newTOS.getName() + " (Position: TOS)" : "None"));
                         refreshAll();
-                        
+
                         JOptionPane.showMessageDialog(this,
                                 "Successfully moved to auxiliary:\n" +
-                                movedDebt.getName() + "\n" +
-                                "Balance: $" + String.format("%.2f", movedDebt.getCurrentBalance()) + "\n" +
-                                "New TOS: " + (newTOS != null ? newTOS.getName() : "None"),
+                                        movedDebt.getName() + "\n" +
+                                        "Balance: $" + String.format("%.2f", movedDebt.getCurrentBalance()) + "\n" +
+                                        "New TOS: " + (newTOS != null ? newTOS.getName() : "None"),
                                 "Moved to Auxiliary",
                                 JOptionPane.INFORMATION_MESSAGE);
                     }
@@ -1663,7 +1787,7 @@ public class UserDashboard extends JFrame {
         } else {
             JOptionPane.showMessageDialog(this,
                     "No active debt to move!\n" +
-                    "Client debt stack is empty.",
+                            "Client debt stack is empty.",
                     "No TOS Available",
                     JOptionPane.WARNING_MESSAGE);
         }
@@ -1694,20 +1818,21 @@ public class UserDashboard extends JFrame {
                         "FINAL CONFIRMATION",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.ERROR_MESSAGE);
-                
+
                 if (finalConfirm == JOptionPane.YES_OPTION) {
                     manager.popDebt();
                     log("DELETED: " + top.getName() + " from TOS (Confirmed twice)");
                     addEventToCalendar("Deleted debt: " + top.getName());
 
                     Debt newTOS = manager.peekTOS();
-                    tosLabel.setText("Current TOS: " + (newTOS != null ? newTOS.getName() + " (Position: TOS)" : "None"));
+                    tosLabel.setText(
+                            "Current TOS: " + (newTOS != null ? newTOS.getName() + " (Position: TOS)" : "None"));
                     refreshAll();
-                    
+
                     JOptionPane.showMessageDialog(this,
                             "Debt successfully deleted:\n" +
-                            top.getName() + "\n" +
-                            "New TOS: " + (newTOS != null ? newTOS.getName() : "None"),
+                                    top.getName() + "\n" +
+                                    "New TOS: " + (newTOS != null ? newTOS.getName() : "None"),
                             "Delete Successful",
                             JOptionPane.INFORMATION_MESSAGE);
                 } else {

@@ -13,6 +13,157 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class FADashboard extends JFrame {
+    // ===========================
+    // Constructor and Initialization Methods - Methods for initializing the
+    // application and setting up default data
+    // ===========================
+    // AppController() - Constructor that initializes the controller, loads users
+    // from storage, and creates test users if they don't exist
+
+    // ===========================
+    // Authentication Methods - Methods for user login, registration, and logout
+    // operations
+    // ===========================
+    // login(String username, String password) - Authenticates user, loads debts if
+    // successful
+    // register(String full, String email, String username, String pass, String
+    // userType) - Registers new user with specified type
+    // register(String full, String email, String username, String pass) - Registers
+    // new user as debtor (default)
+    // logout() - Logs out user, saves debts, resets debt manager
+
+    // ===========================
+    // User Management Methods - Methods for accessing and checking current user
+    // information
+    // ===========================
+    // getCurrentUser() - Returns currently logged-in user object
+    // getCurrentUserType() - Returns user type (ADVISOR/DEBTOR) of current user
+    // getCurrentUsername() - Returns username of currently logged-in user
+    // isAdvisor() - Checks if current user is financial advisor
+    // isDebtor() - Checks if current user is debtor
+
+    // ===========================
+    // Debt Management Methods - Methods for managing and persisting user debt data
+    // ===========================
+    // getManager() - Returns DebtManager instance for debt operations
+    // saveUserDebts() - Saves current user's debts to storage
+    // loadUserDebts(String username) - Loads user's debts from storage (private)
+    // saveAllData() - Saves all application data including users and debts
+
+    // ===========================
+    // Debt Stack Operations - Methods for managing the debt stack (LIFO structure)
+    // ===========================
+    // pushDebt(Debt debt) - Adds a new debt to the top of the stack, applies
+    // strategy if not LIFO
+    // popDebt() - Removes and returns the top debt from the stack
+    // moveToPaidOff(Debt d) - Transfers a debt from active stack to paid-off
+    // history list
+    // peekTOS() - Returns the top debt without removing it from stack
+
+    // ===========================
+    // Data Retrieval Methods - Methods for getting debt data for display
+    // ===========================
+    // getStackForVisualization() - Returns all active debts as ArrayList for
+    // visualization
+    // getPaidOffForVisualization() - Returns all paid-off debts as ArrayList for
+    // display
+    // getMaxDebtAmount() - Returns the highest debt amount for scaling
+    // visualizations
+
+    // ===========================
+    // Strategy Management - Methods for controlling debt repayment strategies
+    // ===========================
+    // setStrategy(Strategy strategy) - Changes the current debt repayment strategy
+    // getStrategy() - Returns the currently active debt repayment strategy
+    // applyStrategy() - Private method that sorts debts based on active strategy
+    // (except LIFO)
+    // reorderForLIFO() - Ensures stack maintains LIFO order for LIFO strategy
+
+    // ===========================
+    // Debug and Utility Methods - Helper methods for testing and debugging
+    // ===========================
+    // getStackOrderDebug() - Returns formatted string showing current stack order
+    // for debugging
+
+    // ===========================
+    // Dashboard Constructor and Initialization - Methods for creating and setting
+    // up the Financial Advisor dashboard
+    // ===========================
+    // FADashboard(AppController controller) - Constructor that creates the
+    // dashboard UI for financial advisors
+    // initializeSampleDebtData() - Initializes sample debt data for demonstration
+    // purposes
+    // initUI() - Sets up the main user interface components and layout
+    // setupBackground() - Loads and sets the background image for the dashboard
+    // createSidebar() - Creates the navigation sidebar with action buttons
+    // createMainContent() - Creates the main content area with tower visualization
+    // and logs
+    // createAnalyticsPanel() - Creates the analytics panel showing statistics
+    // createRightSidePanel() - Creates the right panel with report creation and
+    // appointment tabs
+
+    // ===========================
+    // Sidebar Button Methods - Action methods for sidebar button clicks
+    // ===========================
+    // refreshDashboard() - Refreshes the dashboard display and updates analytics
+    // showClientConsultationRequests() - Displays pending client consultation
+    // requests
+    // showCurrentReport() - Shows details of the current top-of-stack (TOS) report
+    // moveToAuxiliary() - Moves TOS report to auxiliary pillar
+    // solveReport() - Marks current report as solved and reorganizes debts
+    // showProfile() - Displays current user profile information
+    // logout() - Logs out the user and returns to login screen
+
+    // ===========================
+    // Right Panel Methods - Methods for manual report creation and appointment
+    // management
+    // ===========================
+    // createManualReport() - Creates a new debt report manually from form inputs
+    // loadAppointmentSchedule() - Loads and displays scheduled appointments
+    // confirmSchedule(ConsultationRequest, JDialog) - Confirms and schedules a
+    // consultation request
+    // rejectRequest(ConsultationRequest, JDialog) - Rejects a consultation request
+
+    // ===========================
+    // Analytics and Data Methods - Methods for updating and managing dashboard
+    // analytics
+    // ===========================
+    // updateAnalytics() - Updates all analytics statistics on the dashboard
+    // getUniqueClientCount() - Calculates number of unique clients from debt data
+    // updateClientRequestStatus(String, ConsultationRequest, String) - Updates
+    // client request status
+
+    // ===========================
+    // UI Helper Methods - Utility methods for user interface components
+    // ===========================
+    // createSidebarButton(String, String, ActionListener) - Creates styled sidebar
+    // buttons
+    // createRequestPanel(ConsultationRequest, JDialog) - Creates panel for
+    // displaying consultation requests
+    // showError(String, Exception) - Displays error message dialog
+    // createStatPanelWithData(String, String, Color) - Creates statistics panel
+    // with value label
+    // refreshTowerVisualization() - Refreshes the tower visualization display
+    // log(String) - Adds message to operation logs
+
+    // ===========================
+    // Tower Visualization Methods - Methods for drawing the debt tower
+    // visualization
+    // ===========================
+    // TowerVisualizationPanel(Stack, Stack, Stack) - Constructor for tower
+    // visualization panel
+    // paintComponent(Graphics) - Main painting method for tower visualization
+    // drawClientDebts(Graphics2D, int, int) - Draws client debt pillar
+    // drawAuxiliaryDebts(Graphics2D, int, int) - Draws auxiliary debt pillar
+    // drawPaidOffDebts(Graphics2D, int, int) - Draws paid-off debt pillar
+
+    // ===========================
+    // Custom UI Components - Custom Swing components used in the dashboard
+    // ===========================
+    // RoundedPanel(int, Color) - Custom panel with rounded corners
+    // paintComponent(Graphics) - RoundedPanel's painting method
+    // main(String[]) - Main method for standalone testing of the dashboard
+
     private AppController controller;
     private Stack<Debt> clientDebts = new Stack<>();
     private Stack<Debt> auxiliaryDebts = new Stack<>();
