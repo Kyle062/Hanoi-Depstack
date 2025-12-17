@@ -112,6 +112,7 @@ public class DebtManager implements Serializable {
         return debtStack.isEmpty() ? null : debtStack.peek();
     }
 
+
     public ArrayList<Debt> getStackForVisualization() {
         // IMPORTANT: Return the stack as-is for LIFO visualization
         // For LIFO, the last element in the ArrayList is the TOS (most recently added)
@@ -125,6 +126,21 @@ public class DebtManager implements Serializable {
     public void setStrategy(Strategy strategy) {
         this.currentStrategy = strategy;
         applyStrategy();
+    }
+
+    public void deptIsEmpty() { //Is the debt stack empty
+       //delete all depts
+       debtStack.clear();
+    }
+
+    public void searchDebt(String name) { //Search for a debt by name
+        for (Debt debt : debtStack) {
+            if (debt.getName().equalsIgnoreCase(name)) {
+                System.out.println("Debt found: " + debt.getName() + " with balance: " + debt.getCurrentBalance());
+                return;
+            }
+        }
+        System.out.println("Debt not found: " + name);
     }
 
     private void applyStrategy() {
@@ -164,7 +180,7 @@ public class DebtManager implements Serializable {
         return currentStrategy;
     }
 
-    // Add method to manually reorder stack for true LIFO (if needed)
+    //Add method to manually reorder stack for true LIFO (if needed)
     public void reorderForLIFO() {
         // If strategy is LIFO, ensure the stack reflects insertion order
         // with newest (last pushed) at the top
@@ -186,13 +202,12 @@ public class DebtManager implements Serializable {
             for (int i = 0; i < list.size(); i++) {
                 Debt d = list.get(i);
                 String position;
-                if (i == list.size() - 1) {
+                if (i == list.size() -1) {
                     position = "TOS (Top/Newest)";
                 } else {
-                    position = "Position " + (list.size() - i - 1) + " from top";
+                    position = "Position " + (list.size() - i -1) + " from top";
                 }
-                sb.append("  ").append(position).append(": ")
-                        .append(d.getName()).append(" ($").append(d.getCurrentBalance()).append(")\n");
+                sb.append("  ").append(position).append(": ").append(d.getName()).append(" ($").append(d.getCurrentBalance()).append(")\n");
             }
         }
         return sb.toString();
